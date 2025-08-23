@@ -35,13 +35,11 @@ const Register: React.FC = () => {
   };
 
   const handleGoogleRegister = () => {
-    // TODO: Implement Google OAuth
-    console.log('Google register clicked');
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
   };
 
   const handleInstagramRegister = () => {
-    // TODO: Implement Instagram OAuth
-    console.log('Instagram register clicked');
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/instagram`;
   };
 
   return (

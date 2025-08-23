@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import ThreadDetail from './pages/ThreadDetail';
 import AdminDashboard from './pages/AdminDashboard';
+import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />

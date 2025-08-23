@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import session from 'express-session';
+import passport from './config/passport.js';
 
 import connectDB from './config/database.js';
 import { apiRateLimit } from './middleware/rateLimit.js';
@@ -40,6 +42,15 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(apiRateLimit);
+
+// Session and Passport middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+app.use(passport.initialize());
 
 // Add io to request object
 app.use((req, res, next) => {

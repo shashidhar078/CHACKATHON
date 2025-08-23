@@ -26,13 +26,11 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth
-    console.log('Google login clicked');
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
   };
 
   const handleInstagramLogin = () => {
-    // TODO: Implement Instagram OAuth
-    console.log('Instagram login clicked');
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/instagram`;
   };
 
   return (
