@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function() {
-      return !this.googleId && !this.instagramId;
+      return !this.googleId;
     },
     minlength: 6
   },
@@ -41,10 +41,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     sparse: true
   },
-  instagramId: {
-    type: String,
-    sparse: true
-  },
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -57,7 +53,6 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ email: 1 });
 userSchema.index({ username: 1 });
 userSchema.index({ googleId: 1 });
-userSchema.index({ instagramId: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
