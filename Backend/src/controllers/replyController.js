@@ -86,6 +86,7 @@ export const createReply = async (req, res) => {
       await Reply.findByIdAndUpdate(parentReplyId, { $inc: { replyCount: 1 } });
     }
 
+
     // Create notification for admins if flagged
     if (reply.status === 'flagged') {
       const adminUsers = await User.find({ role: 'admin' });
@@ -96,10 +97,27 @@ export const createReply = async (req, res) => {
         body: `Reply in thread "${thread.title}" has been flagged for review`,
         data: { replyId: reply._id, threadId, type: 'reply' }
       }));
-      
       if (notifications.length > 0) {
         await Notification.insertMany(notifications);
       }
+    }
+
+    // Notify thread author if someone else replies to their thread (not nested reply)
+    if (!parentReplyId && thread.author._id.toString() !== userId.toString()) {
+      await Notification.create({
+        userId: thread.author._id,
+        type: 'reply:new',
+        title: 'New reply to your thread',
+        body: `${req.user.username} replied to your thread "${thread.title}"`,
+        data: { replyId: reply._id, threadId, type: 'reply' }
+      });
+      // Emit socket event to thread author
+      req.io.to(`user:${thread.author._id}`).emit('notification:new', {
+        type: 'reply:new',
+        replyId: reply._id,
+        threadId,
+        message: `${req.user.username} replied to your thread "${thread.title}"`
+      });
     }
 
     // Emit socket event

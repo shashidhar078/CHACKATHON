@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Smile, MoreHorizontal, Reply, Edit, Trash2, Flag } from 'lucide-react';
-import { Reply as ReplyType, User } from '../types';
+import { Heart, MessageCircle, Smile, MoreHorizontal, Reply, Edit, Trash2, Flag, User, Clock, Sparkles } from 'lucide-react';
+import { Reply as ReplyType, User as UserType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { repliesApi } from '../services/api';
 import toast from 'react-hot-toast';
@@ -143,27 +143,12 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
     }
   };
 
-  // Refresh nested replies when needed
-  const refreshNestedReplies = async () => {
-    if (showNested) {
-      setIsLoadingNested(true);
-      try {
-        const response = await repliesApi.getNestedReplies(reply._id);
-        setNestedReplies(response.items || []);
-      } catch (error) {
-        console.error('Failed to refresh nested replies:', error);
-      } finally {
-        setIsLoadingNested(false);
-      }
-    }
-  };
-
   const maxDepth = 3; // Maximum nesting depth
   const canNest = depth < maxDepth;
 
   return (
-    <div className={`${depth > 0 ? 'ml-8 border-l border-gray-200 pl-4' : ''} py-2`}>
-      <div className="bg-white rounded-lg p-4 hover:bg-gray-50 transition-colors">
+    <div className={`${depth > 0 ? 'ml-8 border-l border-border pl-4' : ''} py-2`}>
+      <div className="card p-4 hover-lift transition-all duration-300">
         {/* Reply Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">
@@ -175,7 +160,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
                 className="w-8 h-8 rounded-full"
               />
             ) : (
-              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
                   {reply.author.username.charAt(0).toUpperCase()}
                 </span>
@@ -184,23 +169,24 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
 
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-textPrimary">
                   {reply.author.username}
                 </span>
                 {reply.author._id === user?._id && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-primary-500/20 text-primary-400 px-2 py-1 rounded-full">
                     You
                   </span>
                 )}
                 {reply.status === 'flagged' && (
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                  <span className="text-xs bg-accent-500/20 text-accent-400 px-2 py-1 rounded-full">
                     Under Review
                   </span>
                 )}
               </div>
-              <span className="text-sm text-gray-500">
-                {formatDate(reply.createdAt)}
-              </span>
+              <div className="flex items-center space-x-1 text-sm text-textTertiary">
+                <Clock className="w-3 h-3" />
+                <span>{formatDate(reply.createdAt)}</span>
+              </div>
             </div>
           </div>
 
@@ -209,25 +195,25 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1 hover:bg-surfaceElevated rounded-full transition-colors duration-200"
               >
-                <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                <MoreHorizontal className="w-4 h-4 text-textTertiary" />
               </button>
 
               {showOptions && (
-                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10 min-w-[120px]">
+                <div className="absolute right-0 top-8 bg-surfaceElevated border border-border rounded-xl shadow-2xl py-2 z-10 min-w-[120px]">
                   {isAuthor && (
                     <>
                       <button
                         onClick={handleEdit}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        className="w-full text-left px-4 py-2 text-sm text-textSecondary hover:bg-surface hover:text-textPrimary transition-colors duration-200 flex items-center space-x-2"
                       >
                         <Edit className="w-4 h-4" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={handleDelete}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2"
+                        className="w-full text-left px-4 py-2 text-sm text-accent-400 hover:bg-surface hover:text-accent-300 transition-colors duration-200 flex items-center space-x-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Delete</span>
@@ -237,7 +223,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
                   {isAdmin && !isAuthor && (
                     <button
                       onClick={handleDelete}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2"
+                      className="w-full text-left px-4 py-2 text-sm text-accent-400 hover:bg-surface hover:text-accent-300 transition-colors duration-200 flex items-center space-x-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete as Admin</span>
@@ -251,7 +237,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
 
         {/* Reply-to Context */}
         {reply.parentReplyId && (
-          <div className="mb-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+          <div className="mb-2 text-xs text-textTertiary bg-surfaceElevated p-2 rounded-lg">
             <span className="font-medium">Replying to:</span> {reply.parentReplyAuthor || 'Unknown user'}
           </div>
         )}
@@ -262,20 +248,20 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+              className="input resize-none"
               rows={3}
               maxLength={1000}
             />
             <div className="flex justify-end space-x-2 mt-2">
               <button
                 onClick={() => setIsEditing(false)}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                className="btn btn-ghost text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
+                className="btn btn-primary text-sm"
               >
                 Save
               </button>
@@ -283,21 +269,21 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
           </div>
         ) : (
           <div className="mb-3">
-            <p className="text-gray-800 whitespace-pre-wrap">{reply.content}</p>
+            <p className="text-textSecondary whitespace-pre-wrap">{reply.content}</p>
           </div>
         )}
 
         {/* Reply Actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Like Button */}
             <button
               onClick={handleLike}
               disabled={isLiking}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`btn btn-ghost flex items-center space-x-2 px-3 py-2 ${
                 reply.likedByMe
-                  ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                  ? 'text-accent-400 hover:text-accent-300'
+                  : 'text-textTertiary hover:text-textPrimary'
               }`}
             >
               <Heart className={`w-4 h-4 ${reply.likedByMe ? 'fill-current' : ''}`} />
@@ -308,7 +294,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             {reply.emojiReactions && Object.keys(reply.emojiReactions).length > 0 && (
               <div className="flex items-center space-x-1">
                 {Object.entries(reply.emojiReactions).map(([emoji, count]) => (
-                  <span key={emoji} className="text-sm bg-gray-100 px-2 py-1 rounded-full">
+                  <span key={emoji} className="text-sm bg-surfaceElevated px-2 py-1 rounded-full text-textSecondary">
                     {emoji} {count}
                   </span>
                 ))}
@@ -319,7 +305,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             {canNest && (
               <button
                 onClick={handleReply}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                className="btn btn-ghost flex items-center space-x-2 px-3 py-2"
               >
                 <Reply className="w-4 h-4" />
                 <span>Reply</span>
@@ -330,7 +316,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                className="btn btn-ghost flex items-center space-x-2 px-3 py-2"
               >
                 <Smile className="w-4 h-4" />
                 <span>React</span>
@@ -347,7 +333,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             {showNestedReplies && (
               <button
                 onClick={loadNestedReplies}
-                className="flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                className="btn btn-ghost flex items-center space-x-2 px-3 py-2"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>
@@ -360,7 +346,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
           </div>
 
           {/* Character Count */}
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-textTertiary">
             {reply.content.length}/1000
           </span>
         </div>
@@ -382,7 +368,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
             ))}
             
             {nestedReplies.length === 0 && (
-              <div className="text-center py-4 text-gray-500 text-sm">
+              <div className="text-center py-4 text-textTertiary text-sm">
                 No replies yet. Be the first to reply!
               </div>
             )}

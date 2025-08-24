@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { validateGmail, validatePassword, validateUsername } from '../utils/validation';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, Shield, Zap } from 'lucide-react';
+import { validateGmail, validatePassword, validateUsername, getStrengthColor, getStrengthIcon } from '../utils/validation';
 import toast from 'react-hot-toast';
 
 const Register: React.FC = () => {
@@ -21,7 +21,8 @@ const Register: React.FC = () => {
   const [emailValid, setEmailValid] = useState(false);
   const [passwordValid, setPasswordValid] = useState(false);
   const [confirmPasswordValid, setConfirmPasswordValid] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong'>('weak');
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | 'excellent'>('weak');
+  const [passwordScore, setPasswordScore] = useState(0);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -54,10 +55,12 @@ const Register: React.FC = () => {
       setPasswordValid(validation.isValid);
       setPasswordError(validation.error || '');
       setPasswordStrength(validation.strength);
+      setPasswordScore(validation.score);
     } else {
       setPasswordValid(false);
       setPasswordError('');
       setPasswordStrength('weak');
+      setPasswordScore(0);
     }
   }, [password]);
 
@@ -112,7 +115,7 @@ const Register: React.FC = () => {
 
     try {
       await register(username, email, password);
-      toast.success('Account created successfully! Welcome to ThreadApp!');
+      toast.success('Account created successfully! Welcome to Threads! 🎉');
       navigate('/');
     } catch (error) {
       toast.error('Registration failed. Please try again.');
@@ -125,36 +128,44 @@ const Register: React.FC = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
   };
 
-
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 overflow-hidden -z-10">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/5 rounded-full"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-500/5 rounded-full"></div>
+      </div>
+
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">T</span>
+        <div className="text-center">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-2xl flex items-center justify-center shadow-glow mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-secondary-700 rounded-xl flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
-              sign in to your existing account
+          <h1 className="text-3xl font-bold gradient-text mb-2">
+            Join Threads
+          </h1>
+          <p className="text-textSecondary">
+            Create your account and start the conversation
+          </p>
+          <p className="mt-2 text-sm text-textTertiary">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
+              Sign in here
             </Link>
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-sm font-medium text-textSecondary mb-3 flex items-center">
+                <User className="w-4 h-4 mr-2" />
                 Username
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative">
                 <input
                   id="username"
                   name="username"
@@ -163,37 +174,32 @@ const Register: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className={`input pl-10 pr-10 ${
-                    usernameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    usernameValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-                  }`}
+                  className={`input ${usernameError ? 'input-error' : usernameValid ? 'input-success' : ''}`}
                   placeholder="Choose a username"
                   minLength={3}
                   maxLength={30}
                 />
                 {usernameValid && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-primary-400" />
                   </div>
                 )}
               </div>
               {usernameError && (
-                <div className="flex items-center mt-1 text-sm text-red-600">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
+                  <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {usernameError}
                 </div>
               )}
             </div>
 
+            {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-textSecondary mb-3 flex items-center">
+                <Mail className="w-4 h-4 mr-2" />
                 Email address
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative">
                 <input
                   id="email"
                   name="email"
@@ -202,35 +208,30 @@ const Register: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`input pl-10 pr-10 ${
-                    emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    emailValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-                  }`}
+                  className={`input ${emailError ? 'input-error' : emailValid ? 'input-success' : ''}`}
                   placeholder="Enter your Gmail address"
                 />
                 {emailValid && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-primary-400" />
                   </div>
                 )}
               </div>
               {emailError && (
-                <div className="flex items-center mt-1 text-sm text-red-600">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
+                  <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {emailError}
                 </div>
               )}
             </div>
 
+            {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-textSecondary mb-3 flex items-center">
+                <Lock className="w-4 h-4 mr-2" />
                 Password
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
@@ -239,76 +240,58 @@ const Register: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`input pl-10 pr-10 ${
-                    passwordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    passwordValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-                  }`}
-                  placeholder="Create a password"
+                  className={`input ${passwordError ? 'input-error' : passwordValid ? 'input-success' : ''}`}
+                  placeholder="Create a strong password"
                   minLength={8}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-textPrimary transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-textTertiary" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-textTertiary" />
                   )}
                 </button>
               </div>
               
               {/* Password Strength Indicator */}
               {password && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Password strength:</span>
-                    <span className={`font-medium ${
-                      passwordStrength === 'weak' ? 'text-red-600' :
-                      passwordStrength === 'medium' ? 'text-yellow-600' :
-                      'text-green-600'
-                    }`}>
-                      {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-textSecondary">Password strength:</span>
+                    <span className={`font-medium ${getStrengthColor(passwordStrength)} flex items-center space-x-1`}>
+                      <span>{getStrengthIcon(passwordStrength)}</span>
+                      <span>{passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}</span>
+                      <span>({passwordScore}/10)</span>
                     </span>
                   </div>
-                  <div className="mt-1 flex space-x-1">
-                    <div className={`h-2 flex-1 rounded ${
-                      passwordStrength === 'weak' ? 'bg-red-500' :
-                      passwordStrength === 'medium' ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}></div>
-                    <div className={`h-2 flex-1 rounded ${
-                      passwordStrength === 'weak' ? 'bg-gray-300' :
-                      passwordStrength === 'medium' ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}></div>
-                    <div className={`h-2 flex-1 rounded ${
-                      passwordStrength === 'weak' ? 'bg-gray-300' :
-                      passwordStrength === 'medium' ? 'bg-gray-300' :
-                      'bg-green-500'
-                    }`}></div>
+                  <div className="w-full bg-surfaceElevated rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${getStrengthColor(passwordStrength).replace('text-', 'bg-')}`}
+                      style={{ width: `${passwordScore * 10}%` }}
+                    ></div>
                   </div>
                 </div>
               )}
               
               {passwordError && (
-                <div className="flex items-center mt-1 text-sm text-red-600">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
+                  <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {passwordError}
                 </div>
               )}
             </div>
 
+            {/* Confirm Password Field */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-textSecondary mb-3 flex items-center">
+                <Shield className="w-4 h-4 mr-2" />
                 Confirm Password
               </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative">
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -317,29 +300,25 @@ const Register: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`input pl-10 pr-10 ${
-                    confirmPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
-                    confirmPasswordValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
-                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-                  }`}
+                  className={`input ${confirmPasswordError ? 'input-error' : confirmPasswordValid ? 'input-success' : ''}`}
                   placeholder="Confirm your password"
                   minLength={8}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-textPrimary transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-textTertiary" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-textTertiary" />
                   )}
                 </button>
               </div>
               {confirmPasswordError && (
-                <div className="flex items-center mt-1 text-sm text-red-600">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
+                  <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {confirmPasswordError}
                 </div>
               )}
@@ -350,19 +329,29 @@ const Register: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full text-lg py-4 hover-glow transition-all duration-300"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="loading-spinner h-6 w-6 border-2 border-t-white mr-2"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Create Account
+                </>
+              )}
             </button>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-divider" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                <span className="px-4 bg-background text-textSecondary font-medium">Or continue with</span>
               </div>
             </div>
 
@@ -370,7 +359,7 @@ const Register: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoogleRegister}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full btn btn-outline py-4 text-base hover:bg-primary-500/10 transition-all duration-300"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path

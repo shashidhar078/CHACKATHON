@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  bio: {
+    type: String,
+    default: '',
+    maxlength: 500
+  },
   googleId: {
     type: String,
     sparse: true

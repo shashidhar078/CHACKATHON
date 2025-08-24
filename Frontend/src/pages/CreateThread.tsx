@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Send, Hash, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Send, Hash, AlertCircle, Image as ImageIcon, Lightbulb } from 'lucide-react';
 import { threadsApi } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -144,20 +144,20 @@ const CreateThread: React.FC = () => {
   const isFormValid = title && content && topic && !titleError && !contentError && !topicError;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-surface border-b border-border sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-surfaceElevated rounded-full transition-colors text-textSecondary hover:text-textPrimary"
             >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Create New Thread</h1>
-              <p className="text-sm text-gray-500">Share your thoughts with the community</p>
+              <h1 className="text-xl font-semibold text-textPrimary">Create New Thread</h1>
+              <p className="text-sm text-textSecondary">Share your thoughts with the community</p>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ const CreateThread: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-textSecondary mb-2">
               Thread Title *
             </label>
             <input
@@ -176,20 +176,18 @@ const CreateThread: React.FC = () => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
-                titleError ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`input ${titleError ? 'input-error' : ''}`}
               placeholder="What's your thread about?"
               maxLength={100}
             />
             <div className="flex justify-between items-center mt-1">
               {titleError && (
-                <div className="flex items-center text-sm text-red-600">
+                <div className="flex items-center text-sm text-accent-400">
                   <AlertCircle className="h-4 w-4 mr-1" />
                   {titleError}
                 </div>
               )}
-              <span className={`text-sm ${titleError ? 'text-red-500' : 'text-gray-500'}`}>
+              <span className={`text-sm ${titleError ? 'text-accent-400' : 'text-textTertiary'}`}>
                 {title.length}/100
               </span>
             </div>
@@ -197,7 +195,7 @@ const CreateThread: React.FC = () => {
 
           {/* Topic Selection */}
           <div>
-            <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="topic" className="block text-sm font-medium text-textSecondary mb-2">
               Topic *
             </label>
             <div className="relative">
@@ -205,9 +203,7 @@ const CreateThread: React.FC = () => {
                 id="topic"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors appearance-none ${
-                  topicError ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`input ${topicError ? 'input-error' : ''}`}
               >
                 <option value="">Select a topic</option>
                 {TOPICS.map((topicOption) => (
@@ -217,11 +213,11 @@ const CreateThread: React.FC = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <Hash className="h-5 w-5 text-gray-400" />
+                <Hash className="h-5 w-5 text-textTertiary" />
               </div>
             </div>
             {topicError && (
-              <div className="flex items-center mt-1 text-sm text-red-600">
+              <div className="flex items-center mt-1 text-sm text-accent-400">
                 <AlertCircle className="h-4 w-4 mr-1" />
                 {topicError}
               </div>
@@ -230,7 +226,7 @@ const CreateThread: React.FC = () => {
 
           {/* Content */}
           <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="content" className="block text-sm font-medium text-textSecondary mb-2">
               Thread Content *
             </label>
             <div className="relative">
@@ -239,18 +235,16 @@ const CreateThread: React.FC = () => {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 rows={12}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none ${
-                  contentError ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`input ${contentError ? 'input-error' : ''}`}
                 placeholder="Share your thoughts, questions, or start a discussion..."
                 maxLength={5000}
               />
-              <div className="absolute bottom-3 right-3 bg-gray-100 px-2 py-1 rounded text-xs text-gray-500">
+              <div className="absolute bottom-3 right-3 bg-surfaceElevated px-2 py-1 rounded text-xs text-textTertiary">
                 {content.length}/5000
               </div>
             </div>
             {contentError && (
-              <div className="flex items-center mt-1 text-sm text-red-600">
+              <div className="flex items-center mt-1 text-sm text-accent-400">
                 <AlertCircle className="h-4 w-4 mr-1" />
                 {contentError}
               </div>
@@ -259,7 +253,7 @@ const CreateThread: React.FC = () => {
 
           {/* Image Upload */}
           <div>
-            <label htmlFor="imageFile" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="imageFile" className="block text-sm font-medium text-textSecondary mb-2">
               Image (Optional)
             </label>
             <div className="space-y-2">
@@ -273,7 +267,7 @@ const CreateThread: React.FC = () => {
                     handleImageUpload(file);
                   }
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="input"
                 disabled={isLoading}
               />
               <input
@@ -281,12 +275,12 @@ const CreateThread: React.FC = () => {
                 type="url"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="input"
                 placeholder="Or paste image URL here"
                 disabled={isLoading}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-textTertiary mt-1">
               Upload an image or paste an image URL to enhance your thread
             </p>
           </div>
@@ -294,7 +288,7 @@ const CreateThread: React.FC = () => {
           {/* Image Caption */}
           {imageUrl && (
             <div>
-              <label htmlFor="imageCaption" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="imageCaption" className="block text-sm font-medium text-textSecondary mb-2">
                 Image Caption (Optional)
               </label>
               <input
@@ -302,12 +296,12 @@ const CreateThread: React.FC = () => {
                 type="text"
                 value={imageCaption}
                 onChange={(e) => setImageCaption(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                className="input"
                 placeholder="Describe the image..."
                 maxLength={200}
               />
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-textTertiary">
                   {imageCaption.length}/200
                 </span>
               </div>
@@ -319,15 +313,11 @@ const CreateThread: React.FC = () => {
             <button
               type="submit"
               disabled={!isFormValid || isLoading}
-              className={`flex items-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                isFormValid && !isLoading
-                  ? 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className={`btn ${isFormValid && !isLoading ? 'btn-primary' : 'btn-ghost opacity-50 cursor-not-allowed'}`}
             >
               {isLoading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="loading-spinner h-4 w-4 border-2 mr-2"></div>
                   Creating...
                 </>
               ) : (
@@ -341,15 +331,22 @@ const CreateThread: React.FC = () => {
         </form>
 
         {/* Tips */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-900 mb-2">💡 Tips for great threads:</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Be clear and specific in your title</li>
-            <li>• Provide context and background information</li>
-            <li>• Ask engaging questions to encourage discussion</li>
-            <li>• Choose the most relevant topic for better visibility</li>
-            <li>• Be respectful and follow community guidelines</li>
-          </ul>
+        <div className="mt-8 p-6 card-glass">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-primary-500/20 rounded-lg">
+              <Lightbulb className="h-5 w-5 text-primary-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-textPrimary mb-2">Tips for great threads:</h3>
+              <ul className="text-sm text-textSecondary space-y-1">
+                <li>• Be clear and specific in your title</li>
+                <li>• Provide context and background information</li>
+                <li>• Ask engaging questions to encourage discussion</li>
+                <li>• Choose the most relevant topic for better visibility</li>
+                <li>• Be respectful and follow community guidelines</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

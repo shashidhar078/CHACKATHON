@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Clock, User, Tag } from 'lucide-react';
+import { Heart, MessageCircle, Clock, User, Tag, Sparkles, Eye } from 'lucide-react';
 import { Thread } from '../types';
 
 interface ThreadCardProps {
@@ -24,7 +24,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
   };
 
   return (
-    <div className="card hover:shadow-md transition-shadow duration-200">
+    <div className="card p-6 hover-lift transition-all duration-300">
       <div className="flex items-start space-x-4">
         {/* Author Avatar */}
         <div className="flex-shrink-0">
@@ -32,10 +32,10 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
             <img
               src={thread.author.avatarUrl}
               alt={thread.author.username}
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 rounded-full border-2 border-border"
             />
           ) : (
-            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
                 {thread.author.username.charAt(0).toUpperCase()}
               </span>
@@ -45,46 +45,47 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="text-sm font-medium text-gray-900">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-sm font-medium text-textPrimary">
               {thread.author.username}
             </span>
-            <span className="text-sm text-gray-500">•</span>
-            <span className="text-sm text-gray-500">
-              {formatDate(thread.createdAt)}
-            </span>
+            <span className="text-sm text-textTertiary">•</span>
+            <div className="flex items-center space-x-1 text-sm text-textTertiary">
+              <Clock className="w-3 h-3" />
+              <span>{formatDate(thread.createdAt)}</span>
+            </div>
             {thread.status === 'flagged' && (
               <>
-                <span className="text-sm text-gray-500">•</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                <span className="text-sm text-textTertiary">•</span>
+                <span className="badge badge-accent text-xs">
                   Under Review
                 </span>
               </>
             )}
           </div>
 
-          <Link to={`/thread/${thread._id}`} className="block">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-primary-600 transition-colors">
+          <Link to={`/thread/${thread._id}`} className="block group">
+            <h3 className="text-xl font-semibold text-textPrimary mb-3 group-hover:text-primary-400 transition-colors duration-200">
               {thread.title}
             </h3>
-            <p className="text-gray-600 mb-3 line-clamp-2">
+            <p className="text-textSecondary mb-4 line-clamp-3 leading-relaxed">
               {thread.content}
             </p>
           </Link>
 
           {/* Image Display */}
           {thread.imageUrl && (
-            <div className="mb-3">
+            <div className="mb-4 rounded-xl overflow-hidden">
               <img
                 src={thread.imageUrl}
                 alt={thread.imageCaption || 'Thread image'}
-                className="w-full max-w-md rounded-lg shadow-sm"
+                className="w-full max-w-md rounded-lg shadow-md transition-transform duration-300 group-hover:scale-105"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}
               />
               {thread.imageCaption && (
-                <p className="text-sm text-gray-500 mt-1 italic">
+                <p className="text-sm text-textTertiary mt-2 italic">
                   {thread.imageCaption}
                 </p>
               )}
@@ -92,30 +93,41 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
           )}
 
           {/* Topic */}
-          <div className="flex items-center space-x-2 mb-3">
-            <Tag className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-500 capitalize">
+          <div className="flex items-center space-x-2 mb-4">
+            <Tag className="w-4 h-4 text-textTertiary" />
+            <span className="text-sm text-textSecondary capitalize">
               {thread.topic}
             </span>
           </div>
 
           {/* Stats */}
-          <div className="flex items-center space-x-4 text-sm text-gray-500">
-            <div className="flex items-center space-x-1">
-              <Heart className={`w-4 h-4 ${thread.likedByMe ? 'text-red-500 fill-current' : ''}`} />
+          <div className="flex items-center space-x-6 text-sm">
+            <div className={`flex items-center space-x-2 ${
+              thread.likedByMe ? 'text-accent-400' : 'text-textTertiary hover:text-textPrimary'
+            } transition-colors duration-200`}>
+              <Heart className={`w-4 h-4 ${thread.likedByMe ? 'fill-current' : ''}`} />
               <span>{thread.likes}</span>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-2 text-textTertiary hover:text-textPrimary transition-colors duration-200">
               <MessageCircle className="w-4 h-4" />
               <span>{thread.replyCount}</span>
             </div>
+            {thread.views > 0 && (
+              <div className="flex items-center space-x-2 text-textTertiary">
+                <Eye className="w-4 h-4" />
+                <span>{thread.views}</span>
+              </div>
+            )}
           </div>
 
           {/* Summary (if available) */}
           {thread.summary && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-md">
-              <h4 className="text-sm font-medium text-gray-900 mb-1">AI Summary</h4>
-              <p className="text-sm text-gray-600 whitespace-pre-line">
+            <div className="mt-4 p-4 bg-primary-500/10 rounded-xl border border-primary-500/20">
+              <div className="flex items-center space-x-2 mb-2">
+                <Sparkles className="w-4 h-4 text-primary-400" />
+                <h4 className="text-sm font-medium text-primary-400">AI Summary</h4>
+              </div>
+              <p className="text-sm text-primary-300 whitespace-pre-line leading-relaxed">
                 {thread.summary}
               </p>
             </div>

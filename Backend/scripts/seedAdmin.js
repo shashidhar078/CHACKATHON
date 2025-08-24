@@ -21,7 +21,7 @@ const createAdminUser = async () => {
     }
 
     // Create admin user - CHANGE THIS PASSWORD!
-    const adminPassword = 'admin@78'; // ⚠️ CHANGE THIS TO YOUR PASSWORD!
+    const adminPassword = 'Admin@78'; // ⚠️ CHANGE THIS TO YOUR PASSWORD!
 
     const adminUser = new User({
       username: 'admin',

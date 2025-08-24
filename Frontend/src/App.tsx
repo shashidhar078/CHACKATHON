@@ -11,6 +11,7 @@ import CreateThread from './pages/CreateThread';
 import ThreadDetail from './pages/ThreadDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminThreadDetail from './pages/AdminThreadDetail';
+import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route index element={<Home />} />
             <Route path="create-thread" element={<CreateThread />} />
             <Route path="thread/:id" element={<ThreadDetail />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="admin/thread/:id" element={<AdminThreadDetail />} />
           </Route>

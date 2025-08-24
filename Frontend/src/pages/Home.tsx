@@ -94,29 +94,27 @@ const Home: React.FC = () => {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">Failed to load threads. Please try again.</p>
+        <p className="text-accent-400">Failed to load threads. Please try again.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Threads</h1>
-              <p className="text-gray-600 mt-1">Join the conversation and share your thoughts</p>
-            </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-lg">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold gradient-text">Threads</h1>
+            <p className="text-textSecondary mt-1">Join the conversation and share your thoughts</p>
           </div>
         </div>
         <button
           onClick={() => navigate('/create-thread')}
-          className="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-primary-700 hover:to-purple-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+          className="btn btn-primary flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>New Thread</span>
@@ -124,12 +122,12 @@ const Home: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="card p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Discover Threads</h2>
+          <h2 className="text-lg font-semibold text-textPrimary">Discover Threads</h2>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center space-x-2 text-sm text-textSecondary hover:text-textPrimary transition-colors"
           >
             <Filter className="w-4 h-4" />
             <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -142,13 +140,13 @@ const Home: React.FC = () => {
               {/* Search */}
               <form onSubmit={handleSearch} className="md:col-span-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-textTertiary w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search threads by title or content..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                    className="input pl-10"
                   />
                 </div>
               </form>
@@ -158,7 +156,7 @@ const Home: React.FC = () => {
                 <select
                   value={filters.topic || ''}
                   onChange={(e) => handleTopicFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors appearance-none"
+                  className="input appearance-none"
                 >
                   <option value="">All Topics</option>
                   {topics.map(topic => (
@@ -168,21 +166,21 @@ const Home: React.FC = () => {
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <Hash className="h-4 w-4 text-gray-400" />
+                  <Hash className="h-4 w-4 text-textTertiary" />
                 </div>
               </div>
             </div>
 
             {/* Sort Options */}
-            <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
-              <span className="text-sm font-medium text-gray-700">Sort by:</span>
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 pt-4 border-t border-border">
+              <span className="text-sm font-medium text-textSecondary">Sort by:</span>
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleSortChange('newest')}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.sort === 'newest'
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                      : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceElevated'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -192,8 +190,8 @@ const Home: React.FC = () => {
                   onClick={() => handleSortChange('oldest')}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.sort === 'oldest'
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                      : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceElevated'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -203,8 +201,8 @@ const Home: React.FC = () => {
                   onClick={() => handleSortChange('popular')}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filters.sort === 'popular'
-                      ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                      : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceElevated'
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
@@ -220,8 +218,8 @@ const Home: React.FC = () => {
       <div className="space-y-4">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading threads...</p>
+            <div className="loading-spinner h-8 w-8 border-2 border-t-primary-500 mx-auto"></div>
+            <p className="text-textSecondary mt-2">Loading threads...</p>
           </div>
         ) : threadsData?.items && threadsData.items.length > 0 ? (
           <>
@@ -235,17 +233,17 @@ const Home: React.FC = () => {
                 <button
                   onClick={() => handlePageChange(filters.page! - 1)}
                   disabled={filters.page === 1}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-3 py-2 text-sm border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surfaceElevated transition-colors"
                 >
                   Previous
                 </button>
-                <span className="px-3 py-2 text-sm text-gray-700">
+                <span className="px-3 py-2 text-sm text-textSecondary">
                   Page {filters.page} of {Math.ceil(threadsData.total / threadsData.limit)}
                 </span>
                 <button
                   onClick={() => handlePageChange(filters.page! + 1)}
                   disabled={filters.page! >= Math.ceil(threadsData.total / threadsData.limit)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-3 py-2 text-sm border border-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surfaceElevated transition-colors"
                 >
                   Next
                 </button>
@@ -254,11 +252,11 @@ const Home: React.FC = () => {
           </>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 bg-surfaceElevated rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-8 h-8 text-textTertiary" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No threads found</h3>
-            <p className="text-gray-600 mb-4">
+            <h3 className="text-lg font-medium text-textPrimary mb-2">No threads found</h3>
+            <p className="text-textSecondary mb-4">
               {filters.search || filters.topic
                 ? 'Try adjusting your search or filters'
                 : 'Be the first to start a conversation!'}
@@ -266,7 +264,7 @@ const Home: React.FC = () => {
             {!filters.search && !filters.topic && (
               <button
                 onClick={() => navigate('/create-thread')}
-                className="bg-gradient-to-r from-primary-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-primary-700 hover:to-purple-600 transition-colors"
+                className="btn btn-primary"
               >
                 Create First Thread
               </button>

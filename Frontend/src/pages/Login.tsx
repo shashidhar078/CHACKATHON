@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, LogIn } from 'lucide-react';
 import { validateGmail, validatePassword } from '../utils/validation';
 import toast from 'react-hot-toast';
 
@@ -89,38 +89,45 @@ const Login: React.FC = () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
   };
 
-
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Subtle background elements without blur */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/5 rounded-full"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-500/5 rounded-full"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-500/3 rounded-full"></div>
+      </div>
+
+      <div className="max-w-md w-full space-y-8 relative z-10">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl flex items-center justify-center shadow-glow mb-6">
-            <span className="text-white font-bold text-2xl">T</span>
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-600 rounded-2xl flex items-center justify-center shadow-glow mb-6 hover-lift transition-all duration-300">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary-600 to-secondary-700 rounded-xl flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
           </div>
-          <h2 className="text-4xl font-bold gradient-text mb-2">
+          <h1 className="text-4xl font-bold gradient-text mb-2">
             Welcome Back
-          </h2>
+          </h1>
           <p className="text-textSecondary text-lg">
-            Sign in to your ThreadApp account
+            Sign in to your Threads account
           </p>
           <p className="mt-4 text-sm text-textTertiary">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-700 transition-colors">
+            <Link to="/register" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
               Create one now
             </Link>
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="card p-8 space-y-6">
+          <div className="bg-surfaceElevated border border-border rounded-2xl p-8 space-y-6 shadow-soft hover:shadow-medium transition-all duration-300">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-textSecondary mb-3">
                 Email address
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-textTertiary" />
                 </div>
                 <input
                   id="email"
@@ -139,12 +146,12 @@ const Login: React.FC = () => {
                 />
                 {emailValid && (
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                    <CheckCircle className="h-5 w-5 text-success-500" />
+                    <CheckCircle className="h-5 w-5 text-primary-400" />
                   </div>
                 )}
               </div>
               {emailError && (
-                <div className="flex items-center mt-2 text-sm text-error-600 bg-error-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
                   <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {emailError}
                 </div>
@@ -152,12 +159,12 @@ const Login: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-textSecondary mb-3">
                 Password
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-textTertiary" />
                 </div>
                 <input
                   id="password"
@@ -176,18 +183,18 @@ const Login: React.FC = () => {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-textPrimary transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5 text-textTertiary" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5 text-textTertiary" />
                   )}
                 </button>
               </div>
               {passwordError && (
-                <div className="flex items-center mt-2 text-sm text-error-600 bg-error-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
                   <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
                   {passwordError}
                 </div>
@@ -199,16 +206,18 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn btn-primary w-full text-lg py-4"
+              className="btn btn-primary w-full text-lg py-4 hover-glow transition-all duration-300"
             >
               {isLoading ? (
-                <div className="loading-dots">
-                  <div></div>
-                  <div></div>
-                  <div></div>
+                <div className="flex items-center justify-center">
+                  <div className="loading-spinner h-6 w-6 border-2 border-t-white mr-2"></div>
+                  Signing In...
                 </div>
               ) : (
-                'Sign In'
+                <>
+                  <LogIn className="w-5 h-5 mr-2" />
+                  Sign In
+                </>
               )}
             </button>
           </div>
@@ -227,7 +236,7 @@ const Login: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full btn btn-outline py-4 text-base hover:bg-primary-50"
+                className="w-full btn btn-outline py-4 text-base hover:bg-primary-500/10 transition-all duration-300"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path

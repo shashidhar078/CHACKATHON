@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { Heart, MessageCircle, Clock, User, Tag, ArrowLeft, Sparkles, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Clock, User, Tag, ArrowLeft, Sparkles, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { threadsApi, repliesApi } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
@@ -137,10 +137,10 @@ const ThreadDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-gray-600 mt-2">Loading thread...</p>
+          <div className="loading-spinner h-10 w-10 border-3 border-t-primary-500 mx-auto"></div>
+          <p className="text-textSecondary mt-4">Loading thread...</p>
         </div>
       </div>
     );
@@ -148,9 +148,9 @@ const ThreadDetail: React.FC = () => {
 
   if (error || !threadData) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <p className="text-red-600">Failed to load thread. Please try again.</p>
+          <p className="text-accent-400">Failed to load thread. Please try again.</p>
         </div>
       </div>
     );
@@ -159,18 +159,18 @@ const ThreadDetail: React.FC = () => {
   const { thread, replies } = threadData;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Back Button */}
       <Link
         to="/"
-        className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
+        className="inline-flex items-center space-x-2 text-textSecondary hover:text-textPrimary mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Threads</span>
       </Link>
 
       {/* Thread Content */}
-      <div className="card mb-6">
+      <div className="card p-6 mb-8">
         <div className="flex items-start space-x-4">
           {/* Author Avatar */}
           <div className="flex-shrink-0">
@@ -181,7 +181,7 @@ const ThreadDetail: React.FC = () => {
                 className="w-12 h-12 rounded-full"
               />
             ) : (
-              <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
                   {thread.author.username.charAt(0).toUpperCase()}
                 </span>
@@ -191,46 +191,46 @@ const ThreadDetail: React.FC = () => {
 
           {/* Thread Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 mb-2">
-              <span className="text-sm font-medium text-gray-900">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-sm font-medium text-textPrimary">
                 {thread.author.username}
               </span>
-              <span className="text-sm text-gray-500">•</span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-textTertiary">•</span>
+              <span className="text-sm text-textTertiary">
                 {formatDate(thread.createdAt)}
               </span>
               {thread.status === 'flagged' && (
                 <>
-                  <span className="text-sm text-gray-500">•</span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                  <span className="text-sm text-textTertiary">•</span>
+                  <span className="badge badge-accent text-xs">
                     Under Review
                   </span>
                 </>
               )}
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">{thread.title}</h1>
+            <h1 className="text-3xl font-bold text-textPrimary mb-4">{thread.title}</h1>
             
-            <div className="flex items-center space-x-2 mb-3">
-              <Tag className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-500 capitalize">{thread.topic}</span>
+            <div className="flex items-center space-x-2 mb-4">
+              <Tag className="w-4 h-4 text-textTertiary" />
+              <span className="text-sm text-textSecondary capitalize">{thread.topic}</span>
             </div>
 
-            <p className="text-gray-700 mb-4 whitespace-pre-wrap">{thread.content}</p>
+            <p className="text-textSecondary mb-6 whitespace-pre-wrap leading-relaxed">{thread.content}</p>
 
             {/* Image Display */}
             {thread.imageUrl && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <img
                   src={thread.imageUrl}
                   alt={thread.imageCaption || 'Thread image'}
-                  className="w-full max-w-2xl rounded-lg shadow-md"
+                  className="w-full max-w-2xl rounded-xl shadow-md"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
                 {thread.imageCaption && (
-                  <p className="text-sm text-gray-500 mt-2 italic text-center">
+                  <p className="text-sm text-textTertiary mt-3 italic text-center">
                     {thread.imageCaption}
                   </p>
                 )}
@@ -238,26 +238,26 @@ const ThreadDetail: React.FC = () => {
             )}
 
             {/* Thread Actions */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              <div className="flex items-center space-x-6">
                 <button
                   onClick={() => likeThreadMutation.mutate()}
                   disabled={likeThreadMutation.isLoading}
-                  className={`flex items-center space-x-1 text-sm ${
-                    thread.likedByMe ? 'text-red-500' : 'text-gray-500 hover:text-gray-700'
+                  className={`flex items-center space-x-2 text-sm transition-colors ${
+                    thread.likedByMe ? 'text-accent-400' : 'text-textTertiary hover:text-textPrimary'
                   }`}
                 >
-                  <Heart className={`w-4 h-4 ${thread.likedByMe ? 'fill-current' : ''}`} />
+                  <Heart className={`w-5 h-5 ${thread.likedByMe ? 'fill-current' : ''}`} />
                   <span>{thread.likes}</span>
                 </button>
-                <div className="flex items-center space-x-1 text-sm text-gray-500">
-                  <MessageCircle className="w-4 h-4" />
+                <div className="flex items-center space-x-2 text-sm text-textTertiary">
+                  <MessageCircle className="w-5 h-5" />
                   <span>{thread.replyCount}</span>
                 </div>
               </div>
 
               {user && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setIsReplyModalOpen(true)}
                     className="btn btn-primary"
@@ -268,7 +268,7 @@ const ThreadDetail: React.FC = () => {
                     <button
                       onClick={() => summarizeThreadMutation.mutate()}
                       disabled={summarizeThreadMutation.isLoading}
-                      className="btn btn-secondary flex items-center space-x-1"
+                      className="btn btn-secondary flex items-center space-x-2"
                     >
                       <Sparkles className="w-4 h-4" />
                       <span>Summarize</span>
@@ -282,7 +282,7 @@ const ThreadDetail: React.FC = () => {
                         }
                       }}
                       disabled={deleteThreadMutation.isLoading}
-                      className="btn btn-danger flex items-center space-x-1"
+                      className="btn btn-accent flex items-center space-x-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       <span>Delete</span>
@@ -294,12 +294,12 @@ const ThreadDetail: React.FC = () => {
 
             {/* AI Summary */}
             {thread.summary && (
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="text-sm font-medium text-blue-900 mb-2 flex items-center space-x-1">
+              <div className="mt-6 p-5 bg-primary-500/10 rounded-xl border border-primary-500/20">
+                <h3 className="text-sm font-medium text-primary-400 mb-3 flex items-center space-x-2">
                   <Sparkles className="w-4 h-4" />
                   <span>AI Summary</span>
                 </h3>
-                <p className="text-sm text-blue-800 whitespace-pre-line">
+                <p className="text-sm text-primary-300 whitespace-pre-line leading-relaxed">
                   {thread.summary}
                 </p>
               </div>
@@ -309,59 +309,80 @@ const ThreadDetail: React.FC = () => {
       </div>
 
       {/* Replies */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          Replies ({thread.replyCount})
-        </h2>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-textPrimary">
+            Replies ({thread.replyCount})
+          </h2>
+          {replies.items && replies.items.length > 0 && (
+            <button
+              onClick={() => setIsReplyModalOpen(true)}
+              className="btn btn-primary"
+            >
+              Add Reply
+            </button>
+          )}
+        </div>
 
         {replies.items && replies.items.length > 0 ? (
           <>
-            {replies.items.map((reply: Reply) => (
-              <ReplyCard 
-                key={reply._id} 
-                reply={reply} 
-                threadId={id!}
-                onReplyUpdate={(replyId, updatedReply) => {
-                  queryClient.invalidateQueries(['thread', id]);
-                }}
-                onReplyDelete={(replyId) => {
-                  queryClient.invalidateQueries(['thread', id]);
-                }}
-                onNestedReply={(parentReplyId) => {
-                  // Open reply modal with parentReplyId
-                  setParentReplyId(parentReplyId);
-                  setIsReplyModalOpen(true);
-                }}
-              />
-            ))}
+            <div className="space-y-4">
+              {replies.items.map((reply: Reply) => (
+                <ReplyCard 
+                  key={reply._id} 
+                  reply={reply} 
+                  threadId={id!}
+                  onReplyUpdate={(replyId, updatedReply) => {
+                    queryClient.invalidateQueries(['thread', id]);
+                  }}
+                  onReplyDelete={(replyId) => {
+                    queryClient.invalidateQueries(['thread', id]);
+                  }}
+                  onNestedReply={(parentReplyId) => {
+                    // Open reply modal with parentReplyId
+                    setParentReplyId(parentReplyId);
+                    setIsReplyModalOpen(true);
+                  }}
+                />
+              ))}
+            </div>
 
             {/* Reply Pagination */}
             {replies.total > replies.limit && (
-              <div className="flex justify-center items-center space-x-2 mt-8">
+              <div className="flex justify-center items-center space-x-3 mt-8">
                 <button
                   onClick={() => setReplyPage(prev => Math.max(1, prev - 1))}
                   disabled={replyPage === 1}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="btn btn-ghost flex items-center space-x-2 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
                 </button>
-                <span className="px-3 py-2 text-sm text-gray-700">
+                <span className="text-sm text-textSecondary px-4 py-2">
                   Page {replyPage} of {Math.ceil(replies.total / replies.limit)}
                 </span>
                 <button
                   onClick={() => setReplyPage(prev => prev + 1)}
                   disabled={replyPage >= Math.ceil(replies.total / replies.limit)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="btn btn-ghost flex items-center space-x-2 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-8">
-            <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No replies yet. Be the first to reply!</p>
+          <div className="card p-8 text-center">
+            <MessageCircle className="w-16 h-16 text-textTertiary mx-auto mb-4 opacity-60" />
+            <h3 className="text-xl font-medium text-textPrimary mb-2">No replies yet</h3>
+            <p className="text-textSecondary mb-6">Be the first to share your thoughts!</p>
+            <button
+              onClick={() => setIsReplyModalOpen(true)}
+              className="btn btn-primary"
+            >
+              Add First Reply
+            </button>
           </div>
         )}
       </div>

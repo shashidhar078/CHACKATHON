@@ -5,6 +5,7 @@ export interface User {
   role: 'user' | 'admin';
   badges: string[];
   avatarUrl?: string;
+  bio?: string;
   isBlocked?: boolean;
   blockedReason?: string;
   blockedBy?: string;

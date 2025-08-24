@@ -16,6 +16,7 @@ import {
   likeActionSchema
 } from '../middleware/validation.js';
 import { verifyToken, requireUser, requireAdmin } from '../middleware/auth.js';
+import requireReplyAuthorOrAdmin from '../middleware/requireReplyAuthorOrAdmin.js';
 import { contentRateLimit } from '../middleware/rateLimit.js';
 
 const router = express.Router();
@@ -27,6 +28,6 @@ router.get('/:parentReplyId/nested', validateQuery(replyQuerySchema), getNestedR
 router.post('/:id/like', verifyToken, requireUser, validate(likeActionSchema), likeReply);
 router.post('/:id/reactions', verifyToken, requireUser, addEmojiReaction);
 router.patch('/:id', verifyToken, requireUser, validate(createReplySchema), updateReply);
-router.delete('/:id', verifyToken, requireAdmin, deleteReply);
+router.delete('/:id', verifyToken, requireReplyAuthorOrAdmin, deleteReply);
 
 export default router;

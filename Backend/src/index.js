@@ -19,6 +19,7 @@ import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
 import testRoutes from './routes/test.js';
 import uploadRoutes from './routes/upload.js';
+import profileRoutes from './routes/profile.js';
 
 // Load environment variables
 dotenv.config();
@@ -73,6 +74,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/test', testRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/profile', profileRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

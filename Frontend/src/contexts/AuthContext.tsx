@@ -13,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
 }
 
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
