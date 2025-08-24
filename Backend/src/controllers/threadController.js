@@ -4,28 +4,37 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import aiService from '../utils/aiService.js';
 
-// Helper function to add likedByMe field
+// Helper function to add likedByMe field and ensure likes count
 const addLikedByMe = (threads, userId) => {
   return threads.map(thread => ({
-    ...thread.toObject(),
-    likedByMe: thread.likes.includes(userId)
+    ...thread,
+    likes: Array.isArray(thread.likes) ? thread.likes.length : 0,
+    likedByMe: Array.isArray(thread.likes) ? thread.likes.includes(userId) : false
   }));
 };
 
 export const createThread = async (req, res) => {
   try {
-    const { title, content, topic } = req.body;
+    const { title, content, topic, imageUrl, imageCaption } = req.body;
     const userId = req.user._id;
 
-    // AI moderation
-    const moderationText = `${title}\n\n${content}`;
-    const moderationResult = await aiService.moderateText(moderationText);
+    // AI moderation (with fallback)
+    let moderationResult = { status: 'Skipped', reason: 'AI service unavailable', confidence: 0 };
+    try {
+      const moderationText = `${title}\n\n${content}`;
+      moderationResult = await aiService.moderateText(moderationText);
+    } catch (error) {
+      console.error('AI moderation failed, using fallback:', error.message);
+      // Continue with fallback - no moderation
+    }
 
     // Create thread
     const thread = new Thread({
       title,
       content,
       topic,
+      imageUrl: imageUrl || null,
+      imageCaption: imageCaption || null,
       author: {
         _id: userId,
         username: req.user.username,
@@ -37,9 +46,13 @@ export const createThread = async (req, res) => {
     // Set status based on moderation
     if (moderationResult.status === 'Flagged') {
       thread.status = 'flagged';
+      console.log('Thread flagged:', { title, reason: moderationResult.reason });
+    } else {
+      thread.status = 'approved';
     }
 
     await thread.save();
+    console.log('Thread saved with status:', thread.status);
 
     // Create notification for admins if flagged
     if (thread.status === 'flagged') {
@@ -180,7 +193,13 @@ export const getThreadById = async (req, res) => {
 
     // Get replies
     const { page = 1, limit = 10, sort = 'newest' } = req.query;
-    const replyQuery = { threadId: id, status: 'approved' };
+    const replyQuery = { threadId: id };
+    
+    // Only show approved replies to regular users
+    // Admins and thread authors can see all replies (including flagged ones)
+    if (req.user?.role !== 'admin' && (!userId || userId.toString() !== thread.author._id.toString())) {
+      replyQuery.status = 'approved';
+    }
     
     let replySort = { createdAt: -1 };
     if (sort === 'oldest') replySort = { createdAt: 1 };
@@ -335,6 +354,7 @@ export const summarizeThread = async (req, res) => {
 export const deleteThread = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
     const thread = await Thread.findById(id);
     if (!thread) {
@@ -346,6 +366,16 @@ export const deleteThread = async (req, res) => {
       });
     }
 
+    // Check if user can delete this thread (author or admin)
+    if (thread.author._id.toString() !== userId.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'You can only delete your own threads'
+        }
+      });
+    }
+
     // Delete all replies
     await Reply.deleteMany({ threadId: id });
 
@@ -353,10 +383,8 @@ export const deleteThread = async (req, res) => {
     await Thread.findByIdAndDelete(id);
 
     // Emit socket event
-    req.io.emit('admin:moderation', {
-      type: 'thread',
-      id,
-      action: 'deleted'
+    req.io.emit('thread:deleted', {
+      threadId: id
     });
 
     res.status(204).send();

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
 class AIService {
   constructor() {
@@ -39,7 +39,13 @@ class AIService {
             parts: [{
               text: prompt
             }]
-          }]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            topK: 1,
+            topP: 1,
+            maxOutputTokens: 2048,
+          }
         },
         {
           headers: {
@@ -49,13 +55,22 @@ class AIService {
         }
       );
 
-      return response.data.candidates[0].content.parts[0].text;
+      if (response.data.candidates && response.data.candidates[0] && response.data.candidates[0].content) {
+        return response.data.candidates[0].content.parts[0].text;
+      } else {
+        console.error('Unexpected Gemini API response format:', response.data);
+        return null;
+      }
     } catch (error) {
-      console.error('Gemini API error:', error.message);
+      console.error('Gemini API error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       
       // If it's a rate limit or API error, throw
       if (error.response?.status >= 400) {
-        throw new Error(`Gemini API error: ${error.response.status}`);
+        throw new Error(`Gemini API error: ${error.response.status} - ${error.response.data?.error?.message || 'Unknown error'}`);
       }
       
       // For network errors, return fallback
@@ -95,6 +110,20 @@ Text to analyze: "${text}"`;
       };
     } catch (error) {
       console.error('Moderation error:', error);
+      
+      // Simple fallback moderation for common offensive words
+      const offensiveWords = ['fuck', 'shit', 'bitch', 'asshole', 'dick', 'pussy', 'cunt', 'whore', 'slut'];
+      const lowerText = text.toLowerCase();
+      const foundOffensive = offensiveWords.find(word => lowerText.includes(word));
+      
+      if (foundOffensive) {
+        return { 
+          status: 'Flagged', 
+          reason: `Contains offensive language: ${foundOffensive}`, 
+          confidence: 0.8 
+        };
+      }
+      
       return { status: 'Skipped', reason: 'Moderation failed', confidence: 0 };
     }
   }

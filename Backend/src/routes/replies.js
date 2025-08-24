@@ -3,7 +3,10 @@ import {
   createReply,
   getRepliesByThread,
   likeReply,
-  deleteReply
+  deleteReply,
+  getNestedReplies,
+  updateReply,
+  addEmojiReaction
 } from '../controllers/replyController.js';
 import {
   validate,
@@ -20,7 +23,10 @@ const router = express.Router();
 // Reply routes
 router.post('/:threadId', verifyToken, requireUser, contentRateLimit, validate(createReplySchema), createReply);
 router.get('/thread/:threadId', validateQuery(replyQuerySchema), getRepliesByThread);
+router.get('/:parentReplyId/nested', validateQuery(replyQuerySchema), getNestedReplies);
 router.post('/:id/like', verifyToken, requireUser, validate(likeActionSchema), likeReply);
+router.post('/:id/reactions', verifyToken, requireUser, addEmojiReaction);
+router.patch('/:id', verifyToken, requireUser, validate(createReplySchema), updateReply);
 router.delete('/:id', verifyToken, requireAdmin, deleteReply);
 
 export default router;

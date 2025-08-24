@@ -1,5 +1,6 @@
 import express from 'express';
 import passport from 'passport';
+import jwt from 'jsonwebtoken';
 import { register, login, getMe } from '../controllers/authController.js';
 import { validate, registerSchema, loginSchema } from '../middleware/validation.js';
 import { verifyToken } from '../middleware/auth.js';
@@ -32,10 +33,21 @@ router.get('/google/callback',
     }
     passport.authenticate('google', { session: false, failureRedirect: '/login' })(req, res, next);
   },
-  (req, res) => {
-    // Redirect to frontend with token
-    const token = req.user.token;
-    res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}`);
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+      }
+      
+      // Generate JWT token
+      const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      
+      // Redirect to frontend with token
+      res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}`);
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
   }
 );
 

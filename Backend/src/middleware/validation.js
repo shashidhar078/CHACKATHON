@@ -16,7 +16,9 @@ export const loginSchema = z.object({
 export const createThreadSchema = z.object({
   title: z.string().min(1).max(200).trim(),
   content: z.string().min(1).max(5000).trim(),
-  topic: z.string().min(1).max(50).trim()
+  topic: z.string().min(1).max(50).trim(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageCaption: z.string().max(200).trim().optional().or(z.literal(''))
 });
 
 export const threadQuerySchema = z.object({
@@ -29,7 +31,8 @@ export const threadQuerySchema = z.object({
 
 // Reply validation schemas
 export const createReplySchema = z.object({
-  content: z.string().min(1).max(2000).trim()
+  content: z.string().min(1).max(2000).trim(),
+  parentReplyId: z.string().optional()
 });
 
 export const replyQuerySchema = z.object({

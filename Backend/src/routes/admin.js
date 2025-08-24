@@ -3,10 +3,15 @@ import {
   getDashboard,
   getFlaggedThreads,
   getFlaggedReplies,
+  getThreadById,
   approveThread,
   approveReply,
+  deleteThread,
+  deleteReply,
   getUsers,
-  updateUserRole
+  updateUserRole,
+  blockUser,
+  unblockUser
 } from '../controllers/adminController.js';
 import {
   validate,
@@ -23,10 +28,15 @@ router.use(verifyToken, requireAdmin);
 
 router.get('/dashboard', getDashboard);
 router.get('/threads/flagged', getFlaggedThreads);
+router.get('/threads/:id', getThreadById);
 router.get('/replies/flagged', getFlaggedReplies);
 router.patch('/threads/:id/approve', approveThread);
+router.delete('/threads/:id', deleteThread);
 router.patch('/replies/:id/approve', approveReply);
+router.delete('/replies/:id', deleteReply);
 router.get('/users', validateQuery(notificationQuerySchema), getUsers);
 router.patch('/users/:id/role', validate(updateUserRoleSchema), updateUserRole);
+router.post('/users/:id/block', blockUser);
+router.post('/users/:id/unblock', unblockUser);
 
 export default router;

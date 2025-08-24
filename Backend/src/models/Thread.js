@@ -19,6 +19,17 @@ const threadSchema = new mongoose.Schema({
     trim: true,
     maxlength: 50
   },
+  imageUrl: {
+    type: String,
+    default: null,
+    trim: true
+  },
+  imageCaption: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 200
+  },
   author: {
     _id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -93,6 +104,13 @@ threadSchema.methods.updateReplyCount = async function() {
   const Reply = mongoose.model('Reply');
   this.replyCount = await Reply.countDocuments({ threadId: this._id });
   return this.save();
+};
+
+// Static method to update reply count
+threadSchema.statics.updateReplyCount = async function(threadId) {
+  const Reply = mongoose.model('Reply');
+  const replyCount = await Reply.countDocuments({ threadId });
+  return this.findByIdAndUpdate(threadId, { replyCount }, { new: true });
 };
 
 export default mongoose.model('Thread', threadSchema);

@@ -6,6 +6,11 @@ const replySchema = new mongoose.Schema({
     ref: 'Thread',
     required: true
   },
+  parentReplyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Reply',
+    default: null
+  },
   content: {
     type: String,
     required: true,
@@ -45,6 +50,23 @@ const replySchema = new mongoose.Schema({
       type: Boolean,
       default: false
     }
+  },
+  emojiReactions: {
+    type: Map,
+    of: Number,
+    default: {}
+  },
+  replyCount: {
+    type: Number,
+    default: 0
+  },
+  depth: {
+    type: Number,
+    default: 0
+  },
+  parentReplyAuthor: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true
@@ -52,6 +74,7 @@ const replySchema = new mongoose.Schema({
 
 // Indexes
 replySchema.index({ threadId: 1, createdAt: -1 });
+replySchema.index({ parentReplyId: 1, createdAt: -1 });
 replySchema.index({ 'author._id': 1 });
 replySchema.index({ status: 1 });
 

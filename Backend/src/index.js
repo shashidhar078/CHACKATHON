@@ -17,6 +17,8 @@ import threadRoutes from './routes/threads.js';
 import replyRoutes from './routes/replies.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
+import testRoutes from './routes/test.js';
+import uploadRoutes from './routes/upload.js';
 
 // Load environment variables
 dotenv.config();
@@ -69,6 +71,11 @@ app.use('/api/v1/threads', threadRoutes);
 app.use('/api/v1/replies', replyRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/test', testRoutes);
+app.use('/api/v1/upload', uploadRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
 
 // Socket.IO authentication and event handling
 io.use(async (socket, next) => {

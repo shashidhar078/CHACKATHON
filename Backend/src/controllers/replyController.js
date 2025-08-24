@@ -4,19 +4,22 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import aiService from '../utils/aiService.js';
 
-// Helper function to add likedByMe field
+// Helper function to add likedByMe field and ensure likes count
 const addLikedByMe = (replies, userId) => {
   return replies.map(reply => ({
-    ...reply.toObject(),
-    likedByMe: reply.likes.includes(userId)
+    ...reply,
+    likes: Array.isArray(reply.likes) ? reply.likes.length : 0,
+    likedByMe: Array.isArray(reply.likes) ? reply.likes.includes(userId) : false
   }));
 };
 
 export const createReply = async (req, res) => {
   try {
     const { threadId } = req.params;
-    const { content } = req.body;
+    const { content, parentReplyId } = req.body;
     const userId = req.user._id;
+
+    console.log('Creating reply with:', { threadId, content, parentReplyId, userId });
 
     // Check if thread exists
     const thread = await Thread.findById(threadId);
@@ -29,13 +32,20 @@ export const createReply = async (req, res) => {
       });
     }
 
-    // AI moderation
-    const moderationResult = await aiService.moderateText(content);
+    // AI moderation (with fallback)
+    let moderationResult = { status: 'Skipped', reason: 'AI service unavailable', confidence: 0 };
+    try {
+      moderationResult = await aiService.moderateText(content);
+    } catch (error) {
+      console.error('AI moderation failed, using fallback:', error.message);
+      // Continue with fallback - no moderation
+    }
 
     // Create reply
     const reply = new Reply({
       threadId,
       content,
+      parentReplyId: parentReplyId || null,
       author: {
         _id: userId,
         username: req.user.username,
@@ -44,15 +54,37 @@ export const createReply = async (req, res) => {
       moderation: moderationResult
     });
 
+    // Calculate depth if it's a nested reply
+    if (parentReplyId) {
+      console.log('Creating nested reply with parentReplyId:', parentReplyId);
+      const parentReply = await Reply.findById(parentReplyId);
+      if (parentReply) {
+        reply.depth = (parentReply.depth || 0) + 1;
+        reply.parentReplyAuthor = parentReply.author.username;
+        console.log('Parent reply found, depth set to:', reply.depth);
+      } else {
+        console.log('Parent reply not found for ID:', parentReplyId);
+      }
+    }
+
     // Set status based on moderation
     if (moderationResult.status === 'Flagged') {
       reply.status = 'flagged';
+      console.log('Reply flagged:', { content: content.substring(0, 50) + '...', reason: moderationResult.reason });
+    } else {
+      reply.status = 'approved';
     }
 
     await reply.save();
+    console.log('Reply saved with status:', reply.status);
 
     // Update thread reply count
-    await thread.updateReplyCount();
+    await Thread.updateReplyCount(threadId);
+    
+    // Update parent reply count if this is a nested reply
+    if (parentReplyId) {
+      await Reply.findByIdAndUpdate(parentReplyId, { $inc: { replyCount: 1 } });
+    }
 
     // Create notification for admins if flagged
     if (reply.status === 'flagged') {
@@ -127,8 +159,8 @@ export const getRepliesByThread = async (req, res) => {
       });
     }
 
-    // Build query - only show approved replies to non-admin users
-    const query = { threadId, status: 'approved' };
+    // Build query - only show approved replies to non-admin users, exclude nested replies
+    const query = { threadId, parentReplyId: null, status: 'approved' };
     if (req.user?.role === 'admin') {
       delete query.status; // Admins can see all replies
     }
@@ -232,7 +264,12 @@ export const deleteReply = async (req, res) => {
     }
 
     // Update thread reply count
-    await Thread.findByIdAndUpdate(reply.threadId, { $inc: { replyCount: -1 } });
+    await Thread.updateReplyCount(reply.threadId);
+    
+    // Update parent reply count if this was a nested reply
+    if (reply.parentReplyId) {
+      await Reply.findByIdAndUpdate(reply.parentReplyId, { $inc: { replyCount: -1 } });
+    }
 
     // Delete reply
     await Reply.findByIdAndDelete(id);
@@ -251,6 +288,130 @@ export const deleteReply = async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to delete reply'
+      }
+    });
+  }
+};
+
+export const getNestedReplies = async (req, res) => {
+  try {
+    const { parentReplyId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const userId = req.user?._id;
+
+    const skip = (page - 1) * limit;
+
+    const replies = await Reply.find({ parentReplyId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Reply.countDocuments({ parentReplyId });
+
+    // Add likedByMe field
+    const repliesWithLikes = addLikedByMe(replies, userId);
+
+    res.json({
+      items: repliesWithLikes,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total
+    });
+  } catch (error) {
+    console.error('Get nested replies error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to get nested replies'
+      }
+    });
+  }
+};
+
+export const updateReply = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    const reply = await Reply.findById(id);
+    if (!reply) {
+      return res.status(404).json({
+        error: {
+          code: 'REPLY_NOT_FOUND',
+          message: 'Reply not found'
+        }
+      });
+    }
+
+    // Check if user can edit this reply
+    if (reply.author._id.toString() !== userId.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You can only edit your own replies'
+        }
+      });
+    }
+
+    reply.content = content;
+    await reply.save();
+
+    res.json({
+      reply: {
+        ...reply.toObject(),
+        likedByMe: reply.likes.includes(userId)
+      }
+    });
+  } catch (error) {
+    console.error('Update reply error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to update reply'
+      }
+    });
+  }
+};
+
+export const addEmojiReaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user._id;
+
+    const reply = await Reply.findById(id);
+    if (!reply) {
+      return res.status(404).json({
+        error: {
+          code: 'REPLY_NOT_FOUND',
+          message: 'Reply not found'
+        }
+      });
+    }
+
+    // Initialize emojiReactions if it doesn't exist
+    if (!reply.emojiReactions) {
+      reply.emojiReactions = new Map();
+    }
+
+    // Add or increment emoji reaction
+    const currentCount = reply.emojiReactions.get(emoji) || 0;
+    reply.emojiReactions.set(emoji, currentCount + 1);
+
+    await reply.save();
+
+    res.json({
+      success: true,
+      emojiReactions: Object.fromEntries(reply.emojiReactions)
+    });
+  } catch (error) {
+    console.error('Add emoji reaction error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to add emoji reaction'
       }
     });
   }

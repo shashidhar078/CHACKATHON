@@ -25,6 +25,6 @@ router.get('/', validateQuery(threadQuerySchema), getThreads);
 router.get('/:id', getThreadById);
 router.post('/:id/like', verifyToken, requireUser, validate(likeActionSchema), likeThread);
 router.post('/:id/summarize', verifyToken, requireUser, aiRateLimit, summarizeThread);
-router.delete('/:id', verifyToken, requireAdmin, deleteThread);
+router.delete('/:id', verifyToken, requireUser, deleteThread);
 
 export default router;

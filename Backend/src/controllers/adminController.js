@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Thread from '../models/Thread.js';
 import Reply from '../models/Reply.js';
+import Notification from '../models/Notification.js';
 
 export const getDashboard = async (req, res) => {
   try {
@@ -38,6 +39,8 @@ export const getFlaggedThreads = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
+    console.log('Fetching flagged threads with query:', { page, limit, skip });
+
     const threads = await Thread.find({ status: 'flagged' })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -45,6 +48,8 @@ export const getFlaggedThreads = async (req, res) => {
       .lean();
 
     const total = await Thread.countDocuments({ status: 'flagged' });
+
+    console.log('Found flagged threads:', { count: threads.length, total });
 
     res.json({
       items: threads,
@@ -68,6 +73,8 @@ export const getFlaggedReplies = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
+    console.log('Fetching flagged replies with query:', { page, limit, skip });
+
     const replies = await Reply.find({ status: 'flagged' })
       .populate('threadId', 'title')
       .sort({ createdAt: -1 })
@@ -76,6 +83,8 @@ export const getFlaggedReplies = async (req, res) => {
       .lean();
 
     const total = await Reply.countDocuments({ status: 'flagged' });
+
+    console.log('Found flagged replies:', { count: replies.length, total });
 
     res.json({
       items: replies,
@@ -264,6 +273,238 @@ export const updateUserRole = async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to update user role'
+      }
+    });
+  }
+};
+
+export const blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user._id;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({
+        error: {
+          code: 'CANNOT_BLOCK_ADMIN',
+          message: 'Cannot block admin users'
+        }
+      });
+    }
+
+    user.isBlocked = true;
+    user.blockedReason = reason;
+    user.blockedBy = adminId;
+    user.blockedAt = new Date();
+    await user.save();
+
+    res.json({
+      user: {
+        ...user.toObject(),
+        password: undefined
+      }
+    });
+  } catch (error) {
+    console.error('Block user error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to block user'
+      }
+    });
+  }
+};
+
+export const unblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found'
+        }
+      });
+    }
+
+    user.isBlocked = false;
+    user.blockedReason = null;
+    user.blockedBy = null;
+    user.blockedAt = null;
+    await user.save();
+
+    res.json({
+      user: {
+        ...user.toObject(),
+        password: undefined
+      }
+    });
+  } catch (error) {
+    console.error('Unblock user error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to unblock user'
+      }
+    });
+  }
+};
+
+export const deleteThread = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const thread = await Thread.findById(id);
+    if (!thread) {
+      return res.status(404).json({
+        error: {
+          code: 'THREAD_NOT_FOUND',
+          message: 'Thread not found'
+        }
+      });
+    }
+
+    // Delete all replies
+    await Reply.deleteMany({ threadId: id });
+
+    // Delete thread
+    await Thread.findByIdAndDelete(id);
+
+    // Emit socket event
+    req.io.emit('admin:moderation', {
+      type: 'thread',
+      id,
+      action: 'deleted'
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Delete thread error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to delete thread'
+      }
+    });
+  }
+};
+
+export const getThreadById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const thread = await Thread.findById(id).lean();
+    if (!thread) {
+      return res.status(404).json({
+        error: {
+          code: 'THREAD_NOT_FOUND',
+          message: 'Thread not found'
+        }
+      });
+    }
+
+    // Get replies
+    const { page = 1, limit = 10, sort = 'newest' } = req.query;
+    const replyQuery = { threadId: id };
+    
+    // Admins can see all replies (including flagged ones)
+    let replySort = { createdAt: -1 };
+    if (sort === 'oldest') replySort = { createdAt: 1 };
+
+    const skip = (page - 1) * limit;
+    const replies = await Reply.find(replyQuery)
+      .sort(replySort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const replyTotal = await Reply.countDocuments(replyQuery);
+
+    // Add likedByMe fields (no userId needed for admin view)
+    const threadWithLikes = {
+      ...thread,
+      likes: Array.isArray(thread.likes) ? thread.likes.length : 0,
+      likedByMe: false
+    };
+    
+    const repliesWithLikes = replies.map(reply => ({
+      ...reply,
+      likes: Array.isArray(reply.likes) ? reply.likes.length : 0,
+      likedByMe: false
+    }));
+
+    res.json({
+      thread: threadWithLikes,
+      replies: {
+        items: repliesWithLikes,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: replyTotal
+      }
+    });
+  } catch (error) {
+    console.error('Get thread error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to get thread'
+      }
+    });
+  }
+};
+
+export const deleteReply = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const reply = await Reply.findById(id);
+    if (!reply) {
+      return res.status(404).json({
+        error: {
+          code: 'REPLY_NOT_FOUND',
+          message: 'Reply not found'
+        }
+      });
+    }
+
+    // Update thread reply count
+    await Thread.updateReplyCount(reply.threadId);
+    
+    // Update parent reply count if this was a nested reply
+    if (reply.parentReplyId) {
+      await Reply.findByIdAndUpdate(reply.parentReplyId, { $inc: { replyCount: -1 } });
+    }
+
+    // Delete reply
+    await Reply.findByIdAndDelete(id);
+
+    // Emit socket event
+    req.io.emit('admin:moderation', {
+      type: 'reply',
+      id,
+      action: 'deleted'
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Delete reply error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to delete reply'
       }
     });
   }
