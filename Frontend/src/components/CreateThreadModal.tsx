@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 interface CreateThreadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { title: string; content: string; topic: string }) => void;
+  onSubmit: (data: { title: string; content: string; topic: string; imageUrl?: string; imageCaption?: string }) => void;
   isLoading: boolean;
 }
 
@@ -17,17 +17,53 @@ const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [topic, setTopic] = useState('general');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageCaption, setImageCaption] = useState('');
 
   const topics = ['general', 'technology', 'books', 'movies', 'music', 'sports', 'politics', 'science'];
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/v1/upload/image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setImageUrl(data.imageUrl);
+        toast.success('Image uploaded successfully!');
+      } else {
+        toast.error('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim() && content.trim()) {
-      onSubmit({ title: title.trim(), content: content.trim(), topic });
+      onSubmit({ 
+        title: title.trim(), 
+        content: content.trim(), 
+        topic,
+        imageUrl: imageUrl.trim() || undefined,
+        imageCaption: imageCaption.trim() || undefined
+      });
       // Reset form
       setTitle('');
       setContent('');
       setTopic('general');
+      setImageUrl('');
+      setImageCaption('');
     }
   };
 
@@ -36,6 +72,8 @@ const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
       setTitle('');
       setContent('');
       setTopic('general');
+      setImageUrl('');
+      setImageCaption('');
       onClose();
     }
   };
@@ -115,6 +153,61 @@ const CreateThreadModal: React.FC<CreateThreadModalProps> = ({
               {content.length}/5000 characters
             </p>
           </div>
+
+          <div>
+            <label htmlFor="imageFile" className="block text-sm font-medium text-gray-700 mb-1">
+              Image (Optional)
+            </label>
+            <div className="space-y-2">
+              <input
+                id="imageFile"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Handle file upload here
+                    handleImageUpload(file);
+                  }
+                }}
+                className="input"
+                disabled={isLoading}
+              />
+              <input
+                id="imageUrl"
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="input"
+                placeholder="Or paste image URL here"
+                disabled={isLoading}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Upload an image or paste an image URL to enhance your thread
+            </p>
+          </div>
+
+          {imageUrl && (
+            <div>
+              <label htmlFor="imageCaption" className="block text-sm font-medium text-gray-700 mb-1">
+                Image Caption (Optional)
+              </label>
+              <input
+                id="imageCaption"
+                type="text"
+                value={imageCaption}
+                onChange={(e) => setImageCaption(e.target.value)}
+                className="input"
+                placeholder="Describe the image..."
+                maxLength={200}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {imageCaption.length}/200 characters
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-3 pt-4">
             <button

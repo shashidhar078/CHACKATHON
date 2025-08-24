@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const OAuthCallback = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { loginWithToken } = useAuth();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -19,13 +19,12 @@ const OAuthCallback = () => {
 
     if (token) {
       // Store the token and redirect to home
-      localStorage.setItem('token', token);
-      login(token);
+      loginWithToken(token);
       navigate('/');
     } else {
       navigate('/login?error=no_token');
     }
-  }, [navigate, login]);
+  }, [navigate, loginWithToken]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

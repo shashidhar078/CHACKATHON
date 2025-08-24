@@ -5,6 +5,10 @@ export interface User {
   role: 'user' | 'admin';
   badges: string[];
   avatarUrl?: string;
+  isBlocked?: boolean;
+  blockedReason?: string;
+  blockedBy?: string;
+  blockedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,6 +18,8 @@ export interface Thread {
   title: string;
   content: string;
   topic: string;
+  imageUrl?: string;
+  imageCaption?: string;
   author: {
     _id: string;
     username: string;
@@ -37,6 +43,8 @@ export interface Thread {
 export interface Reply {
   _id: string;
   threadId: string;
+  parentReplyId?: string; // For nested replies
+  parentReplyAuthor?: string; // Username of parent reply author
   content: string;
   author: {
     _id: string;
@@ -52,6 +60,11 @@ export interface Reply {
     confidence?: number;
     reviewedByAdmin?: boolean;
   };
+  emojiReactions?: {
+    [emoji: string]: number; // emoji: count
+  };
+  replyCount?: number; // Number of nested replies
+  depth?: number; // Nesting depth
   createdAt: string;
   updatedAt: string;
 }
@@ -102,10 +115,13 @@ export interface CreateThreadData {
   title: string;
   content: string;
   topic: string;
+  imageUrl?: string;
+  imageCaption?: string;
 }
 
 export interface CreateReplyData {
   content: string;
+  parentReplyId?: string; // For nested replies
 }
 
 export interface ThreadFilters {

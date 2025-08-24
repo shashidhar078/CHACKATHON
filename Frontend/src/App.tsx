@@ -7,8 +7,10 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import CreateThread from './pages/CreateThread';
 import ThreadDetail from './pages/ThreadDetail';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminThreadDetail from './pages/AdminThreadDetail';
 import OAuthCallback from './pages/OAuthCallback';
 
 function App() {
@@ -25,8 +27,10 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Home />} />
+            <Route path="create-thread" element={<CreateThread />} />
             <Route path="thread/:id" element={<ThreadDetail />} />
             <Route path="admin" element={<AdminDashboard />} />
+            <Route path="admin/thread/:id" element={<AdminThreadDetail />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

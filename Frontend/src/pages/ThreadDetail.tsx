@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { Heart, MessageCircle, Clock, User, Tag, ArrowLeft, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Clock, User, Tag, ArrowLeft, Sparkles, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { threadsApi, repliesApi } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
@@ -19,6 +19,7 @@ const ThreadDetail: React.FC = () => {
   
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [replyPage, setReplyPage] = useState(1);
+  const [parentReplyId, setParentReplyId] = useState<string | null>(null);
 
   const { data: threadData, isLoading, error } = useQuery(
     ['thread', id, replyPage],
@@ -47,6 +48,21 @@ const ThreadDetail: React.FC = () => {
       },
       onError: () => {
         toast.error('Failed to summarize thread');
+      },
+    }
+  );
+
+  const deleteThreadMutation = useMutation(
+    () => threadsApi.deleteThread(id!),
+    {
+      onSuccess: () => {
+        toast.success('Thread deleted successfully!');
+        // Redirect to home page
+        window.location.href = '/';
+      },
+      onError: (error: any) => {
+        const message = error.response?.data?.error?.message || 'Failed to delete thread';
+        toast.error(message);
       },
     }
   );
@@ -202,6 +218,25 @@ const ThreadDetail: React.FC = () => {
 
             <p className="text-gray-700 mb-4 whitespace-pre-wrap">{thread.content}</p>
 
+            {/* Image Display */}
+            {thread.imageUrl && (
+              <div className="mb-4">
+                <img
+                  src={thread.imageUrl}
+                  alt={thread.imageCaption || 'Thread image'}
+                  className="w-full max-w-2xl rounded-lg shadow-md"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                {thread.imageCaption && (
+                  <p className="text-sm text-gray-500 mt-2 italic text-center">
+                    {thread.imageCaption}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Thread Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -239,6 +274,20 @@ const ThreadDetail: React.FC = () => {
                       <span>Summarize</span>
                     </button>
                   )}
+                  {(user._id === thread.author._id || user.role === 'admin') && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this thread? This action cannot be undone.')) {
+                          deleteThreadMutation.mutate();
+                        }
+                      }}
+                      disabled={deleteThreadMutation.isLoading}
+                      className="btn btn-danger flex items-center space-x-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -268,7 +317,22 @@ const ThreadDetail: React.FC = () => {
         {replies.items && replies.items.length > 0 ? (
           <>
             {replies.items.map((reply: Reply) => (
-              <ReplyCard key={reply._id} reply={reply} />
+              <ReplyCard 
+                key={reply._id} 
+                reply={reply} 
+                threadId={id!}
+                onReplyUpdate={(replyId, updatedReply) => {
+                  queryClient.invalidateQueries(['thread', id]);
+                }}
+                onReplyDelete={(replyId) => {
+                  queryClient.invalidateQueries(['thread', id]);
+                }}
+                onNestedReply={(parentReplyId) => {
+                  // Open reply modal with parentReplyId
+                  setParentReplyId(parentReplyId);
+                  setIsReplyModalOpen(true);
+                }}
+              />
             ))}
 
             {/* Reply Pagination */}
@@ -305,9 +369,36 @@ const ThreadDetail: React.FC = () => {
       {/* Create Reply Modal */}
       <CreateReplyModal
         isOpen={isReplyModalOpen}
-        onClose={() => setIsReplyModalOpen(false)}
-        onSubmit={createReplyMutation.mutate}
+        onClose={() => {
+          setIsReplyModalOpen(false);
+          setParentReplyId(null);
+        }}
+        onSubmit={(content, parentReplyId) => {
+          if (parentReplyId) {
+            // Handle nested reply
+            repliesApi.createReply(id!, { content }, parentReplyId)
+              .then((response) => {
+                queryClient.invalidateQueries(['thread', id]);
+                setIsReplyModalOpen(false);
+                setParentReplyId(null);
+                if (response.moderation) {
+                  toast.success('Reply posted but flagged for review');
+                } else {
+                  toast.success('Reply posted successfully!');
+                }
+              })
+              .catch((error: any) => {
+                const message = error.response?.data?.error?.message || 'Failed to post reply';
+                toast.error(message);
+              });
+          } else {
+            // Handle regular reply
+            createReplyMutation.mutate(content);
+          }
+        }}
         isLoading={createReplyMutation.isLoading}
+        threadId={id!}
+        parentReply={parentReplyId ? replies.items?.find(r => r._id === parentReplyId) || null : null}
       />
     </div>
   );

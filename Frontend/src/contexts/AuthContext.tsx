@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -75,6 +76,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithToken = async (token: string) => {
+    try {
+      setToken(token);
+      localStorage.setItem('token', token);
+      
+      // Fetch user data with the token
+      const userData = await authApi.getMe();
+      setUser(userData.user);
+      localStorage.setItem('user', JSON.stringify(userData.user));
+      
+      toast.success('OAuth login successful!');
+    } catch (error: any) {
+      const message = error.response?.data?.error?.message || 'OAuth login failed';
+      toast.error(message);
+      throw error;
+    }
+  };
+
   const register = async (username: string, email: string, password: string) => {
     try {
       const response = await authApi.register({ username, email, password });
@@ -105,6 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     token,
     login,
+    loginWithToken,
     register,
     logout,
     loading,

@@ -109,18 +109,34 @@ export const repliesApi = {
     return response.data;
   },
 
-  createReply: async (threadId: string, data: CreateReplyData): Promise<{ reply: Reply; moderation?: any }> => {
-    const response = await api.post(`/replies/${threadId}`, data);
+  createReply: async (threadId: string, data: CreateReplyData, parentReplyId?: string): Promise<{ reply: Reply; moderation?: any }> => {
+    const payload = parentReplyId ? { ...data, parentReplyId } : data;
+    const response = await api.post(`/replies/${threadId}`, payload);
     return response.data;
   },
 
-  likeReply: async (id: string): Promise<{ likes: number; likedByMe: boolean }> => {
-    const response = await api.post(`/replies/${id}/like`, { action: 'toggle' });
+  likeReply: async (id: string, data: { action: 'toggle' }): Promise<{ likes: number; likedByMe: boolean }> => {
+    const response = await api.post(`/replies/${id}/like`, data);
+    return response.data;
+  },
+
+  updateReply: async (id: string, data: { content: string }): Promise<{ reply: Reply }> => {
+    const response = await api.patch(`/replies/${id}`, data);
     return response.data;
   },
 
   deleteReply: async (id: string): Promise<void> => {
     await api.delete(`/replies/${id}`);
+  },
+
+  getNestedReplies: async (parentReplyId: string, page = 1, limit = 20): Promise<PaginatedResponse<Reply>> => {
+    const response = await api.get(`/replies/${parentReplyId}/nested?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
+  addEmojiReaction: async (replyId: string, emoji: string): Promise<{ success: boolean }> => {
+    const response = await api.post(`/replies/${replyId}/reactions`, { emoji });
+    return response.data;
   },
 };
 
@@ -164,6 +180,11 @@ export const adminApi = {
     return response.data;
   },
 
+  getThreadById: async (id: string): Promise<{ thread: Thread; replies: PaginatedResponse<Reply> }> => {
+    const response = await api.get(`/admin/threads/${id}`);
+    return response.data;
+  },
+
   approveThread: async (id: string): Promise<{ thread: Thread }> => {
     const response = await api.patch(`/admin/threads/${id}/approve`);
     return response.data;
@@ -186,6 +207,24 @@ export const adminApi = {
 
   updateUserRole: async (id: string, role: 'user' | 'admin'): Promise<{ user: User }> => {
     const response = await api.patch(`/admin/users/${id}/role`, { role });
+    return response.data;
+  },
+
+  deleteThread: async (id: string): Promise<void> => {
+    await api.delete(`/admin/threads/${id}`);
+  },
+
+  deleteReply: async (id: string): Promise<void> => {
+    await api.delete(`/admin/replies/${id}`);
+  },
+
+  blockUser: async (id: string, reason: string): Promise<{ user: User }> => {
+    const response = await api.post(`/admin/users/${id}/block`, { reason });
+    return response.data;
+  },
+
+  unblockUser: async (id: string): Promise<{ user: User }> => {
+    const response = await api.post(`/admin/users/${id}/unblock`);
     return response.data;
   },
 };

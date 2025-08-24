@@ -72,6 +72,25 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
             </p>
           </Link>
 
+          {/* Image Display */}
+          {thread.imageUrl && (
+            <div className="mb-3">
+              <img
+                src={thread.imageUrl}
+                alt={thread.imageCaption || 'Thread image'}
+                className="w-full max-w-md rounded-lg shadow-sm"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              {thread.imageCaption && (
+                <p className="text-sm text-gray-500 mt-1 italic">
+                  {thread.imageCaption}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Topic */}
           <div className="flex items-center space-x-2 mb-3">
             <Tag className="w-4 h-4 text-gray-400" />

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { validateGmail, validatePassword, validateUsername } from '../utils/validation';
+import toast from 'react-hot-toast';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -11,14 +13,98 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [usernameValid, setUsernameValid] = useState(false);
+  const [emailValid, setEmailValid] = useState(false);
+  const [passwordValid, setPasswordValid] = useState(false);
+  const [confirmPasswordValid, setConfirmPasswordValid] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong'>('weak');
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  // Real-time validation
+  useEffect(() => {
+    if (username) {
+      const validation = validateUsername(username);
+      setUsernameValid(validation.isValid);
+      setUsernameError(validation.error || '');
+    } else {
+      setUsernameValid(false);
+      setUsernameError('');
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (email) {
+      const validation = validateGmail(email);
+      setEmailValid(validation.isValid);
+      setEmailError(validation.error || '');
+    } else {
+      setEmailValid(false);
+      setEmailError('');
+    }
+  }, [email]);
+
+  useEffect(() => {
+    if (password) {
+      const validation = validatePassword(password);
+      setPasswordValid(validation.isValid);
+      setPasswordError(validation.error || '');
+      setPasswordStrength(validation.strength);
+    } else {
+      setPasswordValid(false);
+      setPasswordError('');
+      setPasswordStrength('weak');
+    }
+  }, [password]);
+
+  useEffect(() => {
+    if (confirmPassword) {
+      if (password !== confirmPassword) {
+        setConfirmPasswordValid(false);
+        setConfirmPasswordError('Passwords do not match');
+      } else {
+        setConfirmPasswordValid(true);
+        setConfirmPasswordError('');
+      }
+    } else {
+      setConfirmPasswordValid(false);
+      setConfirmPasswordError('');
+    }
+  }, [confirmPassword, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate all fields before submission
+    const usernameValidation = validateUsername(username);
+    const emailValidation = validateGmail(email);
+    const passwordValidation = validatePassword(password);
+    
+    if (!usernameValidation.isValid) {
+      setUsernameError(usernameValidation.error || '');
+      toast.error('Please fix the username errors');
+      return;
+    }
+    
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || '');
+      toast.error('Please fix the email errors');
+      return;
+    }
+    
+    if (!passwordValidation.isValid) {
+      setPasswordError(passwordValidation.error || '');
+      toast.error('Please fix the password errors');
+      return;
+    }
+    
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      setConfirmPasswordError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -26,9 +112,10 @@ const Register: React.FC = () => {
 
     try {
       await register(username, email, password);
+      toast.success('Account created successfully! Welcome to ThreadApp!');
       navigate('/');
     } catch (error) {
-      // Error is handled in the auth context
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +163,27 @@ const Register: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="input pl-10"
+                  className={`input pl-10 pr-10 ${
+                    usernameError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
+                    usernameValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
+                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                  }`}
                   placeholder="Choose a username"
                   minLength={3}
                   maxLength={30}
                 />
+                {usernameValid && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
+              {usernameError && (
+                <div className="flex items-center mt-1 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {usernameError}
+                </div>
+              )}
             </div>
 
             <div>
@@ -100,10 +202,25 @@ const Register: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-10"
-                  placeholder="Enter your email"
+                  className={`input pl-10 pr-10 ${
+                    emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
+                    emailValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
+                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                  }`}
+                  placeholder="Enter your Gmail address"
                 />
+                {emailValid && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
+              {emailError && (
+                <div className="flex items-center mt-1 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {emailError}
+                </div>
+              )}
             </div>
 
             <div>
@@ -122,9 +239,13 @@ const Register: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input pl-10 pr-10"
+                  className={`input pl-10 pr-10 ${
+                    passwordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
+                    passwordValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
+                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                  }`}
                   placeholder="Create a password"
-                  minLength={6}
+                  minLength={8}
                 />
                 <button
                   type="button"
@@ -138,6 +259,46 @@ const Register: React.FC = () => {
                   )}
                 </button>
               </div>
+              
+              {/* Password Strength Indicator */}
+              {password && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Password strength:</span>
+                    <span className={`font-medium ${
+                      passwordStrength === 'weak' ? 'text-red-600' :
+                      passwordStrength === 'medium' ? 'text-yellow-600' :
+                      'text-green-600'
+                    }`}>
+                      {passwordStrength.charAt(0).toUpperCase() + passwordStrength.slice(1)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex space-x-1">
+                    <div className={`h-2 flex-1 rounded ${
+                      passwordStrength === 'weak' ? 'bg-red-500' :
+                      passwordStrength === 'medium' ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    }`}></div>
+                    <div className={`h-2 flex-1 rounded ${
+                      passwordStrength === 'weak' ? 'bg-gray-300' :
+                      passwordStrength === 'medium' ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    }`}></div>
+                    <div className={`h-2 flex-1 rounded ${
+                      passwordStrength === 'weak' ? 'bg-gray-300' :
+                      passwordStrength === 'medium' ? 'bg-gray-300' :
+                      'bg-green-500'
+                    }`}></div>
+                  </div>
+                </div>
+              )}
+              
+              {passwordError && (
+                <div className="flex items-center mt-1 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {passwordError}
+                </div>
+              )}
             </div>
 
             <div>
@@ -156,9 +317,13 @@ const Register: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="input pl-10 pr-10"
+                  className={`input pl-10 pr-10 ${
+                    confirmPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' :
+                    confirmPasswordValid ? 'border-green-500 focus:border-green-500 focus:ring-green-500' :
+                    'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                  }`}
                   placeholder="Confirm your password"
-                  minLength={6}
+                  minLength={8}
                 />
                 <button
                   type="button"
@@ -172,6 +337,12 @@ const Register: React.FC = () => {
                   )}
                 </button>
               </div>
+              {confirmPasswordError && (
+                <div className="flex items-center mt-1 text-sm text-red-600">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {confirmPasswordError}
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { Link } from 'react-router-dom';
 import { Users, MessageSquare, Flag, CheckCircle, Trash2, Search } from 'lucide-react';
 import { adminApi } from '../services/api';
 import { Thread, Reply, User } from '../types';
@@ -11,15 +12,27 @@ const AdminDashboard: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: dashboardData } = useQuery('adminDashboard', adminApi.getDashboard);
-  const { data: flaggedThreads } = useQuery(
+  const { data: flaggedThreads, error: flaggedThreadsError } = useQuery(
     ['flaggedThreads', activeTab],
     () => adminApi.getFlaggedThreads(),
-    { enabled: activeTab === 'flagged-threads' }
+    { 
+      enabled: activeTab === 'flagged-threads',
+      onError: (error: any) => {
+        console.error('Flagged threads error:', error);
+        toast.error('Failed to load flagged threads');
+      }
+    }
   );
-  const { data: flaggedReplies } = useQuery(
+  const { data: flaggedReplies, error: flaggedRepliesError } = useQuery(
     ['flaggedReplies', activeTab],
     () => adminApi.getFlaggedReplies(),
-    { enabled: activeTab === 'flagged-replies' }
+    { 
+      enabled: activeTab === 'flagged-replies',
+      onError: (error: any) => {
+        console.error('Flagged replies error:', error);
+        toast.error('Failed to load flagged replies');
+      }
+    }
   );
   const { data: usersData } = useQuery(
     ['users', userSearch],
@@ -77,6 +90,26 @@ const AdminDashboard: React.FC = () => {
       onSuccess: () => {
         queryClient.invalidateQueries(['users']);
         toast.success('User role updated successfully');
+      },
+    }
+  );
+
+  const blockUserMutation = useMutation(
+    ({ id, reason }: { id: string; reason: string }) => adminApi.blockUser(id, reason),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['users']);
+        toast.success('User blocked successfully');
+      },
+    }
+  );
+
+  const unblockUserMutation = useMutation(
+    (id: string) => adminApi.unblockUser(id),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['users']);
+        toast.success('User unblocked successfully');
       },
     }
   );
@@ -179,12 +212,28 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'flagged-threads' && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Flagged Threads</h2>
+            {flaggedThreadsError && (
+              <div className="text-center py-8">
+                <Flag className="w-12 h-12 text-red-300 mx-auto mb-4" />
+                <p className="text-red-500">Error loading flagged threads</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Error occurred while loading flagged threads
+                </p>
+              </div>
+            )}
             {flaggedThreads?.items && flaggedThreads.items.length > 0 ? (
               flaggedThreads.items.map((thread: Thread) => (
                 <div key={thread._id} className="card">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">{thread.title}</h3>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        <Link
+                          to={`/admin/thread/${thread._id}`}
+                          className="text-left hover:text-primary-600 transition-colors"
+                        >
+                          {thread.title}
+                        </Link>
+                      </h3>
                       <p className="text-gray-600 mb-2">{thread.content.substring(0, 200)}...</p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <span>By: {thread.author.username}</span>
@@ -228,19 +277,28 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'flagged-replies' && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">Flagged Replies</h2>
+            {flaggedRepliesError && (
+              <div className="text-center py-8">
+                <Flag className="w-12 h-12 text-red-300 mx-auto mb-4" />
+                <p className="text-red-500">Error loading flagged replies</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Error occurred while loading flagged replies
+                </p>
+              </div>
+            )}
             {flaggedReplies?.items && flaggedReplies.items.length > 0 ? (
               flaggedReplies.items.map((reply: Reply) => (
                 <div key={reply._id} className="card">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="text-gray-600 mb-2">{reply.content}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>By: {reply.author.username}</span>
-                        <span>Thread: {reply.threadId}</span>
-                        {reply.moderation?.reason && (
-                          <span className="text-red-600">Reason: {reply.moderation.reason}</span>
-                        )}
-                      </div>
+                                             <div className="flex items-center space-x-4 text-sm text-gray-500">
+                         <span>By: {reply.author.username}</span>
+                         <span>Thread: {typeof reply.threadId === 'object' ? (reply.threadId as any).title : reply.threadId}</span>
+                         {reply.moderation?.reason && (
+                           <span className="text-red-600">Reason: {reply.moderation.reason}</span>
+                         )}
+                       </div>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       <button
@@ -304,6 +362,9 @@ const AdminDashboard: React.FC = () => {
                         Role
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -345,18 +406,53 @@ const AdminDashboard: React.FC = () => {
                             {user.role}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user.isBlocked ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                              Blocked
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <select
-                            value={user.role}
-                            onChange={(e) => updateUserRoleMutation.mutate({
-                              id: user._id,
-                              role: e.target.value as 'user' | 'admin'
-                            })}
-                            className="input text-sm"
-                          >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                          </select>
+                          <div className="flex space-x-2">
+                            <select
+                              value={user.role}
+                              onChange={(e) => updateUserRoleMutation.mutate({
+                                id: user._id,
+                                role: e.target.value as 'user' | 'admin'
+                              })}
+                              className="input text-sm"
+                            >
+                              <option value="user">User</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                            
+                            {!user.isBlocked ? (
+                              <button
+                                onClick={() => {
+                                  const reason = prompt('Enter reason for blocking user:');
+                                  if (reason) {
+                                    blockUserMutation.mutate({ id: user._id, reason });
+                                  }
+                                }}
+                                className="btn btn-danger text-xs px-2 py-1"
+                                disabled={user.role === 'admin'}
+                              >
+                                Block
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => unblockUserMutation.mutate(user._id)}
+                                className="btn btn-success text-xs px-2 py-1"
+                              >
+                                Unblock
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
