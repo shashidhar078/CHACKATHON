@@ -3,6 +3,14 @@ import Thread from '../models/Thread.js';
 import Reply from '../models/Reply.js';
 import Notification from '../models/Notification.js';
 
+// Helper function to get date range
+const getDateRange = (days) => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return { start, end };
+};
+
 export const getDashboard = async (req, res) => {
   try {
     // Get counts
@@ -505,6 +513,144 @@ export const deleteReply = async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to delete reply'
+      }
+    });
+  }
+};
+
+export const getAnalytics = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Get current totals
+    const [totalUsers, totalThreads, totalReplies] = await Promise.all([
+      User.countDocuments(),
+      Thread.countDocuments(),
+      Reply.countDocuments()
+    ]);
+
+    // Get today's activity
+    const [newUsersToday, newThreadsToday, newRepliesToday] = await Promise.all([
+      User.countDocuments({ createdAt: { $gte: today } }),
+      Thread.countDocuments({ createdAt: { $gte: today } }),
+      Reply.countDocuments({ createdAt: { $gte: today } })
+    ]);
+
+    // Get yesterday's activity for growth calculation
+    const [usersYesterday, threadsYesterday, repliesYesterday] = await Promise.all([
+      User.countDocuments({ createdAt: { $gte: yesterday, $lt: today } }),
+      Thread.countDocuments({ createdAt: { $gte: yesterday, $lt: today } }),
+      Reply.countDocuments({ createdAt: { $gte: yesterday, $lt: today } })
+    ]);
+
+    // Calculate growth percentages
+    const userGrowth = usersYesterday > 0 ? ((newUsersToday - usersYesterday) / usersYesterday) * 100 : 0;
+    const threadGrowth = threadsYesterday > 0 ? ((newThreadsToday - threadsYesterday) / threadsYesterday) * 100 : 0;
+    const replyGrowth = repliesYesterday > 0 ? ((newRepliesToday - repliesYesterday) / repliesYesterday) * 100 : 0;
+
+    // Get flagged content count
+    const flaggedContent = await Promise.all([
+      Thread.countDocuments({ status: 'flagged' }),
+      Reply.countDocuments({ status: 'flagged' })
+    ]).then(([threads, replies]) => threads + replies);
+
+    // Get top users (users with most threads and replies)
+    const topUsers = await User.aggregate([
+      {
+        $lookup: {
+          from: 'threads',
+          localField: '_id',
+          foreignField: 'author',
+          as: 'threads'
+        }
+      },
+      {
+        $lookup: {
+          from: 'replies',
+          localField: '_id',
+          foreignField: 'author',
+          as: 'replies'
+        }
+      },
+      {
+        $project: {
+          username: 1,
+          threads: { $size: '$threads' },
+          replies: { $size: '$replies' },
+          totalContributions: { $add: [{ $size: '$threads' }, { $size: '$replies' }] }
+        }
+      },
+      {
+        $sort: { totalContributions: -1 }
+      },
+      {
+        $limit: 10
+      }
+    ]);
+
+    // Get recent activity (last 20 activities)
+    const recentActivity = await Promise.all([
+      Thread.find({})
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate('author', 'username')
+        .lean(),
+      Reply.find({})
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate('author', 'username')
+        .lean()
+    ]).then(([threads, replies]) => {
+      const activities = [
+        ...threads.map(thread => ({
+          type: 'thread',
+          user: thread.author?.username || 'Unknown',
+          content: `created thread "${thread.title}"`,
+          timestamp: thread.createdAt
+        })),
+        ...replies.map(reply => ({
+          type: 'reply',
+          user: reply.author?.username || 'Unknown',
+          content: `replied to a thread`,
+          timestamp: reply.createdAt
+        }))
+      ];
+      
+      return activities
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 20);
+    });
+
+    // Estimate active users (users who have been active in the last 24 hours)
+    const activeUsers = await User.countDocuments({
+      lastSeen: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    });
+
+    res.json({
+      totalUsers,
+      totalThreads,
+      totalReplies,
+      activeUsers,
+      newUsersToday,
+      newThreadsToday,
+      newRepliesToday,
+      flaggedContent,
+      userGrowth: Math.round(userGrowth * 100) / 100,
+      threadGrowth: Math.round(threadGrowth * 100) / 100,
+      replyGrowth: Math.round(replyGrowth * 100) / 100,
+      topUsers,
+      recentActivity
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to get analytics data'
       }
     });
   }

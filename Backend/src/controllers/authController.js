@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
+import { sendPasswordResetEmail } from '../utils/emailService.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -142,6 +144,132 @@ export const getMe = async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to get user data'
+      }
+    });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      return res.json({
+        message: 'If an account with that email exists, a password reset link has been sent.'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+
+    // Save reset token to user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    // Send email with reset link
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+    
+    try {
+      await sendPasswordResetEmail(user.email, user.username, resetUrl);
+      res.json({
+        message: 'If an account with that email exists, a password reset link has been sent.'
+      });
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // Remove the reset token if email fails
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      
+      res.status(500).json({
+        error: {
+          code: 'EMAIL_ERROR',
+          message: 'Failed to send password reset email. Please try again later.'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to process password reset request'
+      }
+    });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Password reset token is invalid or has expired'
+        }
+      });
+    }
+
+    // Update password
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({
+      message: 'Password has been reset successfully'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to reset password'
+      }
+    });
+  }
+};
+
+export const verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Password reset token is invalid or has expired'
+        }
+      });
+    }
+
+    res.json({
+      message: 'Token is valid'
+    });
+  } catch (error) {
+    console.error('Verify reset token error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to verify token'
       }
     });
   }

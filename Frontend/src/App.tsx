@@ -4,8 +4,11 @@ import { AuthProvider } from './contexts/AuthContext';
 import { SocketProvider } from './contexts/SocketContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Home from './pages/Home';
 import CreateThread from './pages/CreateThread';
 import ThreadDetail from './pages/ThreadDetail';
@@ -19,10 +22,13 @@ function App() {
     <AuthProvider>
       <SocketProvider>
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/oauth-callback" element={<OAuthCallback />} />
-          <Route path="/" element={
+          <Route path="/app" element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>

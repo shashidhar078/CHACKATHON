@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, LogIn } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, LogIn, Home } from 'lucide-react';
 import { validateGmail, validatePassword } from '../utils/validation';
 import toast from 'react-hot-toast';
 
@@ -77,7 +77,7 @@ const Login: React.FC = () => {
     try {
       await login(email, password);
       toast.success('Welcome back!');
-      navigate('/');
+      navigate('/app');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
     } finally {
@@ -91,6 +91,17 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Back to Home Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          to="/"
+          className="btn btn-ghost btn-sm gap-2 hover:bg-primary-500/10 transition-all duration-300"
+        >
+          <Home className="w-4 h-4" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Subtle background elements without blur */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/5 rounded-full"></div>
@@ -115,6 +126,11 @@ const Login: React.FC = () => {
             Don't have an account?{' '}
             <Link to="/register" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
               Create one now
+            </Link>
+          </p>
+          <p className="mt-2 text-sm text-textTertiary">
+            <Link to="/forgot-password" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
+              Forgot your password?
             </Link>
           </p>
         </div>
