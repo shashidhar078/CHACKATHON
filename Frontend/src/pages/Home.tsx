@@ -113,7 +113,7 @@ const Home: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => navigate('/create-thread')}
+          onClick={() => navigate('/app/create-thread')}
           className="btn btn-primary flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
@@ -263,7 +263,7 @@ const Home: React.FC = () => {
             </p>
             {!filters.search && !filters.topic && (
               <button
-                onClick={() => navigate('/create-thread')}
+                onClick={() => navigate('/app/create-thread')}
                 className="btn btn-primary"
               >
                 Create First Thread

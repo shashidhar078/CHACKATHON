@@ -58,7 +58,7 @@ const ThreadDetail: React.FC = () => {
       onSuccess: () => {
         toast.success('Thread deleted successfully!');
         // Redirect to home page
-        window.location.href = '/';
+        window.location.href = '/app';
       },
       onError: (error: any) => {
         const message = error.response?.data?.error?.message || 'Failed to delete thread';
@@ -162,7 +162,7 @@ const ThreadDetail: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Back Button */}
       <Link
-        to="/"
+        to="/app"
         className="inline-flex items-center space-x-2 text-textSecondary hover:text-textPrimary mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />

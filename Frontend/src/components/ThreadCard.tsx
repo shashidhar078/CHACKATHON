@@ -64,7 +64,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
             )}
           </div>
 
-          <Link to={`/thread/${thread._id}`} className="block group">
+          <Link to={`/app/thread/${thread._id}`} className="block group">
             <h3 className="text-xl font-semibold text-textPrimary mb-3 group-hover:text-primary-400 transition-colors duration-200">
               {thread.title}
             </h3>
@@ -112,12 +112,6 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
               <MessageCircle className="w-4 h-4" />
               <span>{thread.replyCount}</span>
             </div>
-            {thread.views > 0 && (
-              <div className="flex items-center space-x-2 text-textTertiary">
-                <Eye className="w-4 h-4" />
-                <span>{thread.views}</span>
-              </div>
-            )}
           </div>
 
           {/* Summary (if available) */}

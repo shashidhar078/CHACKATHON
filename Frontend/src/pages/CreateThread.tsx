@@ -127,11 +127,11 @@ const CreateThread: React.FC = () => {
       if (response.moderation && response.moderation.status === 'Flagged') {
         toast.success('Thread created but is under review for content moderation');
         // Don't navigate to flagged threads - user can't access them
-        navigate('/');
+        navigate('/app');
       } else {
         toast.success('Thread created successfully!');
         // Navigate to the new thread only if it's approved
-        navigate(`/thread/${response.thread._id}`);
+        navigate(`/app/thread/${response.thread._id}`);
       }
     } catch (error: any) {
       console.error('Error creating thread:', error);

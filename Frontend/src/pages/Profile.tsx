@@ -108,7 +108,7 @@ const Profile: React.FC = () => {
               <h2 className="text-2xl font-semibold text-textPrimary">My Threads</h2>
             </div>
             <Link 
-              to="/create-thread" 
+              to="/app/create-thread" 
               className="btn btn-primary flex items-center space-x-2"
             >
               <Sparkles className="w-4 h-4" />
@@ -121,7 +121,7 @@ const Profile: React.FC = () => {
               <BookOpen className="w-16 h-16 text-textTertiary mx-auto mb-4 opacity-60" />
               <h3 className="text-xl font-medium text-textPrimary mb-2">No threads yet</h3>
               <p className="text-textSecondary mb-6">Start a conversation and share your thoughts with the community</p>
-              <Link to="/create-thread" className="btn btn-primary">
+              <Link to="/app/create-thread" className="btn btn-primary">
                 Create Your First Thread
               </Link>
             </div>
@@ -129,7 +129,7 @@ const Profile: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {threads.map(thread => (
                 <div key={thread._id} className="card-glass p-6 hover-lift group">
-                  <Link to={`/thread/${thread._id}`} className="block">
+                  <Link to={`/app/thread/${thread._id}`} className="block">
                     <h3 className="font-bold text-lg text-textPrimary mb-3 group-hover:text-primary-400 transition-colors line-clamp-2">
                       {thread.title}
                     </h3>
@@ -189,7 +189,7 @@ const Profile: React.FC = () => {
             <div className="space-y-4">
               {replies.map(reply => (
                 <div key={reply._id} className="card-glass p-6 hover-lift group">
-                  <Link to={`/thread/${reply.threadId}`} className="block">
+                  <Link to={`/app/thread/${reply.threadId}`} className="block">
                     <p className="text-textSecondary mb-4 group-hover:text-primary-400 transition-colors line-clamp-3">
                       "{reply.content}"
                     </p>

@@ -11,7 +11,8 @@ import {
   getUsers,
   updateUserRole,
   blockUser,
-  unblockUser
+  unblockUser,
+  getAnalytics
 } from '../controllers/adminController.js';
 import {
   validate,
@@ -27,6 +28,7 @@ const router = express.Router();
 router.use(verifyToken, requireAdmin);
 
 router.get('/dashboard', getDashboard);
+router.get('/analytics', getAnalytics);
 router.get('/threads/flagged', getFlaggedThreads);
 router.get('/threads/:id', getThreadById);
 router.get('/replies/flagged', getFlaggedReplies);

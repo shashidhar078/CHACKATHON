@@ -61,6 +61,21 @@ export const authApi = {
     const response = await api.get('/auth/me');
     return response.data;
   },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (token: string, password: string): Promise<{ message: string }> => {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
+  },
+
+  verifyResetToken: async (token: string): Promise<{ message: string }> => {
+    const response = await api.get(`/auth/verify-reset-token/${token}`);
+    return response.data;
+  },
 };
 
 // Threads API
@@ -225,6 +240,25 @@ export const adminApi = {
 
   unblockUser: async (id: string): Promise<{ user: User }> => {
     const response = await api.post(`/admin/users/${id}/unblock`);
+    return response.data;
+  },
+
+  getAnalytics: async (): Promise<{
+    totalUsers: number;
+    totalThreads: number;
+    totalReplies: number;
+    activeUsers: number;
+    newUsersToday: number;
+    newThreadsToday: number;
+    newRepliesToday: number;
+    flaggedContent: number;
+    userGrowth: number;
+    threadGrowth: number;
+    replyGrowth: number;
+    topUsers: Array<{ username: string; threads: number; replies: number }>;
+    recentActivity: Array<{ type: string; user: string; content: string; timestamp: string }>;
+  }> => {
+    const response = await api.get('/admin/analytics');
     return response.data;
   },
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, Shield, Zap } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, Shield, Zap, Home } from 'lucide-react';
 import { validateGmail, validatePassword, validateUsername, getStrengthColor, getStrengthIcon } from '../utils/validation';
 import toast from 'react-hot-toast';
 
@@ -116,7 +116,7 @@ const Register: React.FC = () => {
     try {
       await register(username, email, password);
       toast.success('Account created successfully! Welcome to Threads! 🎉');
-      navigate('/');
+      navigate('/app');
     } catch (error) {
       toast.error('Registration failed. Please try again.');
     } finally {
@@ -130,6 +130,17 @@ const Register: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Back to Home Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          to="/"
+          className="btn btn-ghost btn-sm gap-2 hover:bg-primary-500/10 transition-all duration-300"
+        >
+          <Home className="w-4 h-4" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden -z-10">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/5 rounded-full"></div>
