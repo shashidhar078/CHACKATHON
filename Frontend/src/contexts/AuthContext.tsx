@@ -6,14 +6,13 @@ import toast from 'react-hot-toast';
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User | void>;
   loginWithToken: (token: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
 
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -64,12 +63,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authApi.login({ email, password });
       const { user: userData, token: tokenData } = response;
       
+      // Validate response structure
+      if (!userData || !tokenData) {
+        throw new Error('Invalid login response');
+      }
+      
       setUser(userData);
       setToken(tokenData);
       localStorage.setItem('token', tokenData);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      toast.success('Login successful!');
+      console.log('Login successful, user role:', userData.role);
+      return userData;
     } catch (error: any) {
       const message = error.response?.data?.error?.message || 'Login failed';
       toast.error(message);

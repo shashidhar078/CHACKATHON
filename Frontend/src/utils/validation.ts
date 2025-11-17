@@ -39,6 +39,20 @@ export const validateGmail = (email: string): { isValid: boolean; error?: string
   return { isValid: true };
 };
 
+// Generic email validation used for login (accepts all domains)
+export const validateEmail = (email: string): { isValid: boolean; error?: string } => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!email) {
+    return { isValid: false, error: '📧 Email is required' };
+  }
+
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: '🚫 Please use a valid email address' };
+  }
+
+  return { isValid: true };
+};
 // Password validation rules with enhanced strength detection
 export const validatePassword = (password: string): { 
   isValid: boolean; 

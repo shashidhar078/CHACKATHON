@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Sparkles, LogIn, Home } from 'lucide-react';
-import { validateGmail, validatePassword } from '../utils/validation';
+import { validateEmail, validatePassword } from '../utils/validation';
 import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
@@ -14,9 +14,10 @@ const Login: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
   const [emailValid, setEmailValid] = useState(false);
   const [passwordValid, setPasswordValid] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   // Check for OAuth errors from URL params
   useEffect(() => {
@@ -30,10 +31,23 @@ const Login: React.FC = () => {
     }
   }, [searchParams]);
 
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (loginSuccess && user) {
+      console.log('User state updated, redirecting. Role:', user.role);
+      if (user.role === 'admin') {
+        navigate('/app/admin', { replace: true });
+      } else {
+        navigate('/app', { replace: true });
+      }
+      setLoginSuccess(false);
+    }
+  }, [user, loginSuccess, navigate]);
+
   // Real-time validation
   useEffect(() => {
     if (email) {
-      const validation = validateGmail(email);
+      const validation = validateEmail(email);
       setEmailValid(validation.isValid);
       setEmailError(validation.error || '');
     } else {
@@ -57,7 +71,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     
     // Validate before submission
-    const emailValidation = validateGmail(email);
+    const emailValidation = validateEmail(email);
     const passwordValidation = validatePassword(password);
     
     if (!emailValidation.isValid) {
@@ -75,11 +89,33 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      toast.success('Welcome back!');
-      navigate('/app');
-    } catch (error) {
-      toast.error('Login failed. Please check your credentials.');
+      const userData = await login(email, password);
+      
+      console.log('Login response - userData:', userData);
+      console.log('User role:', userData?.role);
+      
+      if (!userData) {
+        throw new Error('No user data returned');
+      }
+      
+      // Mark login as successful - useEffect will handle redirect
+      setLoginSuccess(true);
+      
+      // Fallback: If user state doesn't update quickly, redirect directly
+      setTimeout(() => {
+        if (userData.role === 'admin') {
+          console.log('Fallback redirect to admin dashboard');
+          navigate('/app/admin', { replace: true });
+        } else {
+          console.log('Fallback redirect to home');
+          navigate('/app', { replace: true });
+        }
+      }, 300);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error?.message || 'Login failed. Please check your credentials.';
+      toast.error(errorMessage);
+      console.error('Login error:', error);
+      setLoginSuccess(false);
     } finally {
       setIsLoading(false);
     }

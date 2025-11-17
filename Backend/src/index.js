@@ -26,10 +26,41 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+// Allowed origins for CORS
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001"
+].filter(Boolean); // Remove undefined values
+
+// CORS origin checker function
+const corsOriginChecker = (origin, callback) => {
+  // Allow requests with no origin (like mobile apps or curl requests)
+  if (!origin) return callback(null, true);
+  
+  // In development, allow all localhost origins
+  if (process.env.NODE_ENV === 'development') {
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+  }
+  
+  // Check if origin is in allowed list
+  if (allowedOrigins.includes(origin)) {
+    callback(null, true);
+  } else {
+    callback(new Error('Not allowed by CORS'));
+  }
+};
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: corsOriginChecker,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true
   }
 });
 
@@ -39,7 +70,7 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: corsOriginChecker,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -178,4 +209,17 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use.`);
+    console.error(`💡 To fix this, either:`);
+    console.error(`   1. Kill the process using port ${PORT}:`);
+    console.error(`      Windows: netstat -ano | findstr :${PORT} then taskkill /PID <PID> /F`);
+    console.error(`      Mac/Linux: lsof -ti:${PORT} | xargs kill -9`);
+    console.error(`   2. Or set a different port in your .env file: PORT=5001`);
+    process.exit(1);
+  } else {
+    console.error('❌ Server error:', err);
+    process.exit(1);
+  }
 });
