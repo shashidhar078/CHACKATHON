@@ -1,11 +1,11 @@
 import axios from 'axios';
-import { 
-  User, 
-  Thread, 
-  Reply, 
-  Notification, 
-  AuthResponse, 
-  LoginCredentials, 
+import {
+  User,
+  Thread,
+  Reply,
+  Notification,
+  AuthResponse,
+  LoginCredentials,
   RegisterCredentials,
   CreateThreadData,
   CreateReplyData,
@@ -14,10 +14,11 @@ import {
   PaginatedResponse
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -87,7 +88,7 @@ export const threadsApi = {
         params.append(key, value.toString());
       }
     });
-    
+
     const response = await api.get(`/threads?${params.toString()}`);
     return response.data;
   },
@@ -215,7 +216,7 @@ export const adminApi = {
     params.append('page', page.toString());
     params.append('limit', limit.toString());
     if (search) params.append('search', search);
-    
+
     const response = await api.get(`/admin/users?${params.toString()}`);
     return response.data;
   },

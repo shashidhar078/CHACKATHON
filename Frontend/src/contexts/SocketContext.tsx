@@ -31,8 +31,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     if (token && user) {
       const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:5000';
-      
-      socketRef.current = io(WS_URL, {
+
+      socketRef.current = io(WS_URL.endsWith('/') ? WS_URL.slice(0, -1) : WS_URL, {
         auth: {
           token,
         },
