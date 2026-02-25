@@ -69,38 +69,38 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate before submission
     const emailValidation = validateEmail(email);
     const passwordValidation = validatePassword(password);
-    
+
     if (!emailValidation.isValid) {
       setEmailError(emailValidation.error || '');
       toast.error('Please fix the email errors');
       return;
     }
-    
+
     if (!passwordValidation.isValid) {
       setPasswordError(passwordValidation.error || '');
       toast.error('Please fix the password errors');
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
       const userData = await login(email, password);
-      
+
       console.log('Login response - userData:', userData);
       console.log('User role:', userData?.role);
-      
+
       if (!userData) {
         throw new Error('No user data returned');
       }
-      
+
       // Mark login as successful - useEffect will handle redirect
       setLoginSuccess(true);
-      
+
       // Fallback: If user state doesn't update quickly, redirect directly
       setTimeout(() => {
         if (userData.role === 'admin') {
@@ -122,7 +122,7 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_WS_URL}/api/v1/auth/google`;
   };
 
   return (
@@ -189,11 +189,10 @@ const Login: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`input pl-12 pr-12 ${
-                    emailError ? 'input-error' :
-                    emailValid ? 'input-success' :
-                    ''
-                  }`}
+                  className={`input pl-12 pr-12 ${emailError ? 'input-error' :
+                      emailValid ? 'input-success' :
+                        ''
+                    }`}
                   placeholder="Enter your Gmail address"
                 />
                 {emailValid && (
@@ -226,11 +225,10 @@ const Login: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`input pl-12 pr-12 ${
-                    passwordError ? 'input-error' :
-                    passwordValid ? 'input-success' :
-                    ''
-                  }`}
+                  className={`input pl-12 pr-12 ${passwordError ? 'input-error' :
+                      passwordValid ? 'input-success' :
+                        ''
+                    }`}
                   placeholder="Enter your password"
                 />
                 <button

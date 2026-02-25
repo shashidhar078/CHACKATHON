@@ -14,10 +14,10 @@ import {
   PaginatedResponse
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 const api = axios.create({
-  baseURL: API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL,
+  baseURL: API_BASE_URL.replace(/\/+$/, ''),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

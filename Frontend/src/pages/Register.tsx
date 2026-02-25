@@ -81,30 +81,30 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate all fields before submission
     const usernameValidation = validateUsername(username);
     const emailValidation = validateGmail(email);
     const passwordValidation = validatePassword(password);
-    
+
     if (!usernameValidation.isValid) {
       setUsernameError(usernameValidation.error || '');
       toast.error('Please fix the username errors');
       return;
     }
-    
+
     if (!emailValidation.isValid) {
       setEmailError(emailValidation.error || '');
       toast.error('Please fix the email errors');
       return;
     }
-    
+
     if (!passwordValidation.isValid) {
       setPasswordError(passwordValidation.error || '');
       toast.error('Please fix the password errors');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setConfirmPasswordError('Passwords do not match');
       toast.error('Passwords do not match');
@@ -125,7 +125,7 @@ const Register: React.FC = () => {
   };
 
   const handleGoogleRegister = () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_WS_URL}/api/v1/auth/google`;
   };
 
   return (
@@ -267,7 +267,7 @@ const Register: React.FC = () => {
                   )}
                 </button>
               </div>
-              
+
               {/* Password Strength Indicator */}
               {password && (
                 <div className="mt-3">
@@ -280,14 +280,14 @@ const Register: React.FC = () => {
                     </span>
                   </div>
                   <div className="w-full bg-surfaceElevated rounded-full h-2">
-                    <div 
+                    <div
                       className={`h-2 rounded-full transition-all duration-300 ${getStrengthColor(passwordStrength).replace('text-', 'bg-')}`}
                       style={{ width: `${passwordScore * 10}%` }}
                     ></div>
                   </div>
                 </div>
               )}
-              
+
               {passwordError && (
                 <div className="flex items-center mt-2 text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
                   <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
