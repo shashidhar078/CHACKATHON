@@ -12,6 +12,7 @@ import {
   Legend,
   Filler,
   RadialLinearScale,
+  ChartOptions,
 } from 'chart.js';
 import { Line, Bar, Doughnut, Radar } from 'react-chartjs-2';
 import ChartSelector from './ChartSelector';
@@ -75,7 +76,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
     ],
   };
 
-  const growthChartOptions = {
+  const growthChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -88,7 +89,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
@@ -100,7 +101,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             const value = context.parsed.y;
             const sign = value >= 0 ? '+' : '';
             return `${context.label}: ${sign}${value.toFixed(1)}%`;
@@ -116,7 +117,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         },
         ticks: {
           color: '#9ca3af',
-          callback: function(value: any) {
+          callback: function (value: any) {
             return value + '%';
           },
         },
@@ -128,7 +129,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         ticks: {
           color: '#9ca3af',
           font: {
-            weight: '600',
+            weight: 600,
           },
         },
       },
@@ -159,7 +160,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
     ],
   };
 
-  const todayActivityOptions = {
+  const todayActivityOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -172,7 +173,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
@@ -203,7 +204,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         ticks: {
           color: '#9ca3af',
           font: {
-            weight: '600',
+            weight: 600,
           },
         },
       },
@@ -232,7 +233,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
     ],
   };
 
-  const contentDistributionOptions = {
+  const contentDistributionOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -251,7 +252,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
@@ -262,7 +263,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         borderWidth: 1,
         cornerRadius: 8,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
             const percentage = ((context.parsed / total) * 100).toFixed(1);
             return `${context.label}: ${context.parsed} (${percentage}%)`;
@@ -295,7 +296,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
     ],
   };
 
-  const topContributorsOptions = {
+  const topContributorsOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -313,7 +314,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
@@ -374,7 +375,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
     ],
   };
 
-  const activityRadarOptions = {
+  const activityRadarOptions: ChartOptions<'radar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -387,7 +388,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
@@ -412,7 +413,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ data }) => {
         pointLabels: {
           color: '#9ca3af',
           font: {
-            weight: '600',
+            weight: 600,
           },
         },
         ticks: {

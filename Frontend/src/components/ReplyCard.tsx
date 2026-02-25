@@ -339,7 +339,7 @@ const ReplyCard: React.FC<ReplyCardProps> = ({
                 <span>
                   {isLoadingNested ? 'Loading...' : 
                    showNested ? `Hide replies (${nestedReplies.length})` : 
-                   `Show replies${reply.replyCount > 0 ? ` (${reply.replyCount})` : ''}`}
+                   `Show replies${(reply.replyCount ?? 0) > 0 ? ` (${reply.replyCount})` : ''}`}
                 </span>
               </button>
             )}

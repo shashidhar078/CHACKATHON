@@ -12,7 +12,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       return 'Just now';
     } else if (diffInHours < 24) {
@@ -102,15 +102,14 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread }) => {
 
           {/* Stats */}
           <div className="flex items-center space-x-6 text-sm">
-            <div className={`flex items-center space-x-2 ${
-              thread.likedByMe ? 'text-accent-400' : 'text-textTertiary hover:text-textPrimary'
-            } transition-colors duration-200`}>
+            <div className={`flex items-center space-x-2 ${thread.likedByMe ? 'text-accent-400' : 'text-textTertiary hover:text-textPrimary'
+              } transition-colors duration-200`}>
               <Heart className={`w-4 h-4 ${thread.likedByMe ? 'fill-current' : ''}`} />
               <span>{thread.likes}</span>
             </div>
             <div className="flex items-center space-x-2 text-textTertiary hover:text-textPrimary transition-colors duration-200">
               <MessageCircle className="w-4 h-4" />
-              <span>{thread.replyCount}</span>
+              <span>{thread.replyCount ?? 0}</span>
             </div>
           </div>
 

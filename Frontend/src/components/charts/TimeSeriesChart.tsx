@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
   Filler,
+  ChartOptions,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
@@ -40,7 +41,7 @@ interface TimeSeriesChartProps {
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ data, title, height = "h-80" }) => {
-  const options = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -58,7 +59,7 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ data, title, height =
         color: '#9ca3af',
         font: {
           size: 14,
-          weight: '600',
+          weight: 600,
         },
       },
       tooltip: {
