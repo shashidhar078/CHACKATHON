@@ -22,32 +22,31 @@ import uploadRoutes from './routes/upload.js';
 import profileRoutes from './routes/profile.js';
 
 // Load environment variables
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const app = express();
 const server = createServer(app);
 
 // Allowed origins for CORS
 const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001"
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL
 ].filter(Boolean); // Remove undefined values
 
 // CORS origin checker function
 const corsOriginChecker = (origin, callback) => {
   // Allow requests with no origin (like mobile apps or curl requests)
   if (!origin) return callback(null, true);
-  
+
   // In development, allow all localhost origins
   if (process.env.NODE_ENV === 'development') {
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
   }
-  
+
   // Check if origin is in allowed list
   if (allowedOrigins.includes(origin)) {
     callback(null, true);
@@ -71,6 +70,7 @@ connectDB();
 app.use(helmet());
 app.use(cors({
   origin: corsOriginChecker,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -92,7 +92,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoints
+app.get('/', (req, res) => {
+  res.send('Server running');
+});
+
 app.get('/health', (req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
@@ -121,7 +125,7 @@ io.use(async (socket, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const User = (await import('./models/User.js')).default;
     const user = await User.findById(decoded.userId).select('-password');
-    
+
     if (!user) {
       return next(new Error('User not found'));
     }
@@ -166,7 +170,7 @@ io.on('connection', (socket) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: {

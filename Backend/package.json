@@ -44,5 +44,8 @@
     "gemini"
   ],
   "author": "Hackathon Team",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": "18.x"
+  }
 }
