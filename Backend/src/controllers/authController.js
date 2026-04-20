@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendPasswordResetEmail } from '../utils/emailService.js';
+import { publishAnalyticsEvent } from '../utils/analyticsEventPublisher.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -33,6 +34,17 @@ export const register = async (req, res) => {
     });
 
     await user.save();
+
+    await publishAnalyticsEvent({
+      eventType: 'user_registered',
+      userId: user._id.toString(),
+      userRole: user.role,
+      entityType: 'user',
+      entityId: user._id.toString(),
+      metadata: {
+        authProvider: 'email'
+      }
+    });
 
     // Generate token
     const token = generateToken(user._id);
@@ -99,6 +111,17 @@ export const login = async (req, res) => {
 
     // Generate token
     const token = generateToken(user._id);
+
+    await publishAnalyticsEvent({
+      eventType: 'user_login_success',
+      userId: user._id.toString(),
+      userRole: user.role,
+      entityType: 'user',
+      entityId: user._id.toString(),
+      metadata: {
+        authProvider: user.googleId ? 'google' : 'email'
+      }
+    });
 
     res.json({
       user: {

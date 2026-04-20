@@ -1,0 +1,4 @@
+v1
+{"path":"file:///workspace/analytics/output/topic_trends/part-00000-d4b33729-f0ac-4fce-b769-2755a3f9e65b-c000.json","size":0,"isDir":false,"modificationTime":1776712866372,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///workspace/analytics/output/topic_trends/part-00076-8b4d2dd5-a006-4fd4-9da3-4c52df2cb817-c000.json","size":123,"isDir":false,"modificationTime":1776712872515,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///workspace/analytics/output/topic_trends/part-00144-47986743-d6e8-4c53-a49f-d42b6faa0a5d-c000.json","size":119,"isDir":false,"modificationTime":1776712877770,"blockReplication":1,"blockSize":33554432,"action":"add"}

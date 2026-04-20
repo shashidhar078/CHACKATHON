@@ -3,6 +3,7 @@ import Reply from '../models/Reply.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import aiService from '../utils/aiService.js';
+import { publishAnalyticsEvent } from '../utils/analyticsEventPublisher.js';
 
 // Helper function to add likedByMe field and ensure likes count
 const addLikedByMe = (threads, userId) => {
@@ -53,6 +54,20 @@ export const createThread = async (req, res) => {
 
     await thread.save();
     console.log('Thread saved with status:', thread.status);
+
+    await publishAnalyticsEvent({
+      eventType: thread.status === 'flagged' ? 'thread_flagged' : 'thread_created',
+      userId: userId.toString(),
+      userRole: req.user.role,
+      entityType: 'thread',
+      entityId: thread._id.toString(),
+      topic: thread.topic,
+      status: thread.status,
+      metadata: {
+        hasImage: Boolean(thread.imageUrl),
+        moderationStatus: moderationResult.status
+      }
+    });
 
     // Create notification for admins if flagged
     if (thread.status === 'flagged') {
@@ -266,6 +281,19 @@ export const likeThread = async (req, res) => {
       await thread.save();
     }
 
+    await publishAnalyticsEvent({
+      eventType: action === 'toggle' && likedByMe ? 'thread_liked' : 'thread_unliked',
+      userId: userId.toString(),
+      userRole: req.user.role,
+      entityType: 'thread',
+      entityId: thread._id.toString(),
+      topic: thread.topic,
+      status: thread.status,
+      metadata: {
+        totalLikes: thread.likes.length
+      }
+    });
+
     // Emit socket event
     req.io.emit('thread:like', {
       threadId: id,
@@ -381,6 +409,16 @@ export const deleteThread = async (req, res) => {
 
     // Delete thread
     await Thread.findByIdAndDelete(id);
+
+    await publishAnalyticsEvent({
+      eventType: 'thread_deleted',
+      userId: userId.toString(),
+      userRole: req.user.role,
+      entityType: 'thread',
+      entityId: id,
+      topic: thread.topic,
+      status: thread.status
+    });
 
     // Emit socket event
     req.io.emit('thread:deleted', {

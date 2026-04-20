@@ -11,7 +11,8 @@ import {
   CreateReplyData,
   ThreadFilters,
   AdminDashboard,
-  PaginatedResponse
+  PaginatedResponse,
+  StreamingAnalytics
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
@@ -37,7 +38,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = String(error.config?.url || '');
+    const isAuthFlowRequest =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/register') ||
+      requestUrl.includes('/auth/forgot-password') ||
+      requestUrl.includes('/auth/reset-password') ||
+      requestUrl.includes('/auth/verify-reset-token');
+
+    // Do not force redirect for auth form submissions; let UI show exact error.
+    if (error.response?.status === 401 && !isAuthFlowRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -262,6 +272,11 @@ export const adminApi = {
     const response = await api.get('/admin/analytics');
     return response.data;
   },
+
+  getStreamingAnalytics: async (): Promise<StreamingAnalytics> => {
+    const response = await api.get('/admin/analytics/streaming');
+    return response.data;
+  }
 };
 
 export default api;

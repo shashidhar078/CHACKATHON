@@ -1,0 +1,4 @@
+v1
+{"path":"file:///workspace/analytics/output/user_activity_trends/part-00000-8e00348a-f640-4c2e-a341-5edc80803f9f-c000.json","size":0,"isDir":false,"modificationTime":1776712881649,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///workspace/analytics/output/user_activity_trends/part-00097-d365a7fa-5a56-494e-86fa-cd9d01f8bdf0-c000.json","size":180,"isDir":false,"modificationTime":1776712893069,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///workspace/analytics/output/user_activity_trends/part-00164-15794147-7897-47af-8340-e7c6b0a28b2d-c000.json","size":181,"isDir":false,"modificationTime":1776712897417,"blockReplication":1,"blockSize":33554432,"action":"add"}

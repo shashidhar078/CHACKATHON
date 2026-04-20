@@ -24,6 +24,15 @@ A modern, full-stack social media platform built with MERN stack and AI integrat
 - **User Management**: Manage user roles and permissions
 - **Real-time Updates**: Live notifications for admin actions
 
+### 📊 Real-Time Analytics with Spark & Kafka
+- **Event Streaming**: Every user action (thread create, reply, like, moderation) is published to Kafka
+- **Real-Time Analytics**: Apache Spark processes event streams to generate insights
+- **Trend Analysis**: Event type trends, topic trends, moderation patterns, and user activity tracking
+- **Admin Insights**: Admins see real-time platform statistics without impacting user experience
+- **Scalable Pipeline**: Handles millions of events with distributed processing
+
+**[📖 Read Full Spark & Kafka Explanation](./SPARK_KAFKA_EXPLAINED.md)** - Complete guide for understanding how the analytics pipeline works (designed for beginners!)
+
 ## 🛠 Tech Stack
 
 ### Backend
@@ -34,6 +43,15 @@ A modern, full-stack social media platform built with MERN stack and AI integrat
 - **Google Gemini API** for AI features
 - **Zod** for validation
 - **Rate limiting** and security middleware
+- **Kafka** for event streaming
+- **KafkaJS** client for publishing analytics events
+
+### Analytics & Streaming
+- **Apache Kafka** (7.5.3) - Distributed event streaming platform
+- **Apache Spark** (3.5.1) - Distributed stream processing engine
+- **Zookeeper** - Kafka cluster coordination
+- **Docker** - Containerized services
+- **Kafka-UI** - Web interface for monitoring Kafka topics
 
 ### Frontend
 - **React 18** with TypeScript
@@ -91,6 +109,40 @@ A modern, full-stack social media platform built with MERN stack and AI integrat
    ```bash
    npm run dev
    ```
+
+### Analytics Stack Setup (Optional - for Real-Time Analytics)
+
+To enable the Spark + Kafka analytics pipeline:
+
+1. **Install Docker** (if not already installed)
+   - Download from [docker.com](https://www.docker.com)
+
+2. **Start Kafka + Spark stack from project root:**
+   ```bash
+   docker compose -f docker-compose.streaming.yml up -d
+   ```
+
+3. **Verify services:**
+   - Kafka UI: http://localhost:8085 (monitor event topics)
+   - Spark Master: http://localhost:8080 (monitor spark jobs)
+
+4. **Enable Kafka in Backend** - Update `.env`:
+   ```env
+   KAFKA_ENABLED=true
+   KAFKA_BROKERS=localhost:9092
+   KAFKA_CLIENT_ID=thread-app-backend
+   KAFKA_TOPIC=threadapp.events
+   SPARK_ANALYTICS_ENABLED=true
+   SPARK_ANALYTICS_OUTPUT_DIR=/workspace/analytics/output
+   ```
+
+5. **Analytics will automatically:**
+   - Collect events when users interact with the platform
+   - Process streams every 5 minutes
+   - Store results in `analytics/output/`
+   - Display in Admin Dashboard
+
+**Note:** Analytics stack is optional. The app works perfectly without it.
 
 ### Frontend Setup
 
@@ -156,6 +208,7 @@ After running the seed script, you can use these demo accounts:
 - `PATCH /api/v1/admin/replies/:id/approve` - Approve flagged reply
 - `GET /api/v1/admin/users` - Get users list
 - `PATCH /api/v1/admin/users/:id/role` - Update user role
+- `GET /api/v1/admin/analytics/streaming` - **[NEW]** Get real-time Spark analytics (event trends, topic trends, moderation patterns, user activity)
 
 ### Notifications
 - `GET /api/v1/notifications` - Get user notifications
@@ -202,7 +255,60 @@ After running the seed script, you can use these demo accounts:
 - **CORS Configuration** for secure cross-origin requests
 - **AI Content Moderation** for safety
 
-## 🚀 Deployment
+## � Analytics Pipeline Architecture
+
+### How Real-Time Analytics Works
+
+```
+User Actions (create/like/reply)
+    ↓
+Backend processes & saves to MongoDB
+    ↓
+Event published to Kafka Topic
+    ↓
+Kafka (Event Queue) - stores reliably
+    ↓
+Spark reads & analyzes every 5 minutes
+    ↓
+Results written to JSON files
+    ↓
+Backend reads results & serves to Admin Dashboard
+    ↓
+Admins see real-time trends (without impacting user experience)
+```
+
+### Event Types Tracked
+
+The system automatically captures analytics events for:
+- User registration and login
+- Thread creation, deletion, flagging
+- Replies creation and moderation
+- Likes and unlikes
+- Admin actions (approvals, deletions)
+- User role changes and blocking
+
+### Analytics Outputs
+
+The Spark job generates 6 types of analytics:
+
+1. **Event Type Trends** - Which actions are most common (5-min windows)
+2. **Topic Trends** - Which topics are most active
+3. **Moderation Trends** - Flagged vs approved content
+4. **User Activity Trends** - User behavior patterns
+5. **Recent Events** - Latest 1000 actions for real-time view
+6. **Pipeline Metrics** - System health and throughput
+
+### Benefits
+
+- ✅ **Non-Blocking**: Analytics don't slow down user experience
+- ✅ **Real-Time**: Admins see trends within seconds
+- ✅ **Scalable**: Handles millions of events efficiently
+- ✅ **Resilient**: Survives service restarts and failures
+- ✅ **Decoupled**: Analytics logic separate from app logic
+
+**For detailed explanation**: Read [SPARK_KAFKA_EXPLAINED.md](./SPARK_KAFKA_EXPLAINED.md)
+
+## �🚀 Deployment
 
 ### Backend Deployment (Render/Heroku)
 1. Set environment variables

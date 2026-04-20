@@ -12,7 +12,8 @@ import {
   updateUserRole,
   blockUser,
   unblockUser,
-  getAnalytics
+  getAnalytics,
+  getStreamingAnalytics
 } from '../controllers/adminController.js';
 import {
   validate,
@@ -29,6 +30,7 @@ router.use(verifyToken, requireAdmin);
 
 router.get('/dashboard', getDashboard);
 router.get('/analytics', getAnalytics);
+router.get('/analytics/streaming', getStreamingAnalytics);
 router.get('/threads/flagged', getFlaggedThreads);
 router.get('/threads/:id', getThreadById);
 router.get('/replies/flagged', getFlaggedReplies);

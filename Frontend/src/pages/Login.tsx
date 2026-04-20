@@ -18,6 +18,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Check for OAuth errors from URL params
   useEffect(() => {
@@ -87,6 +88,7 @@ const Login: React.FC = () => {
     }
 
     setIsLoading(true);
+    setSubmitError('');
 
     try {
       const userData = await login(email, password);
@@ -114,6 +116,7 @@ const Login: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error?.response?.data?.error?.message || 'Login failed. Please check your credentials.';
       toast.error(errorMessage);
+      setSubmitError(errorMessage);
       console.error('Login error:', error);
       setLoginSuccess(false);
     } finally {
@@ -271,6 +274,13 @@ const Login: React.FC = () => {
               )}
             </button>
           </div>
+
+          {submitError && (
+            <div className="flex items-start text-sm text-accent-400 bg-accent-500/10 px-3 py-2 rounded-lg">
+              <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
 
           <div className="mt-8">
             <div className="relative">

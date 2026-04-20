@@ -2,6 +2,8 @@ import User from '../models/User.js';
 import Thread from '../models/Thread.js';
 import Reply from '../models/Reply.js';
 import Notification from '../models/Notification.js';
+import { publishAnalyticsEvent } from '../utils/analyticsEventPublisher.js';
+import { getSparkKafkaAnalytics } from '../utils/streamAnalyticsReader.js';
 
 // Helper function to get date range
 const getDateRange = (days) => {
@@ -129,6 +131,19 @@ export const approveThread = async (req, res) => {
     thread.moderation.reviewedByAdmin = true;
     await thread.save();
 
+    await publishAnalyticsEvent({
+      eventType: 'admin_thread_approved',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'thread',
+      entityId: id,
+      topic: thread.topic,
+      status: thread.status,
+      metadata: {
+        moderationStatus: thread.moderation?.status
+      }
+    });
+
     // Emit socket event
     req.io.emit('admin:moderation', {
       type: 'thread',
@@ -170,6 +185,21 @@ export const approveReply = async (req, res) => {
     reply.status = 'approved';
     reply.moderation.reviewedByAdmin = true;
     await reply.save();
+
+    const thread = await Thread.findById(reply.threadId).select('topic');
+    await publishAnalyticsEvent({
+      eventType: 'admin_reply_approved',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'reply',
+      entityId: id,
+      topic: thread?.topic || null,
+      status: reply.status,
+      metadata: {
+        threadId: reply.threadId.toString(),
+        moderationStatus: reply.moderation?.status
+      }
+    });
 
     // Emit socket event
     req.io.emit('admin:moderation', {
@@ -263,6 +293,18 @@ export const updateUserRole = async (req, res) => {
     user.role = role;
     await user.save();
 
+    await publishAnalyticsEvent({
+      eventType: 'admin_user_role_changed',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'user',
+      entityId: user._id.toString(),
+      status: user.isBlocked ? 'blocked' : 'active',
+      metadata: {
+        updatedRole: role
+      }
+    });
+
     res.json({
       user: {
         _id: user._id,
@@ -317,6 +359,18 @@ export const blockUser = async (req, res) => {
     user.blockedAt = new Date();
     await user.save();
 
+    await publishAnalyticsEvent({
+      eventType: 'admin_user_blocked',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'user',
+      entityId: user._id.toString(),
+      status: 'blocked',
+      metadata: {
+        reason: reason || 'No reason provided'
+      }
+    });
+
     res.json({
       user: {
         ...user.toObject(),
@@ -354,6 +408,15 @@ export const unblockUser = async (req, res) => {
     user.blockedAt = null;
     await user.save();
 
+    await publishAnalyticsEvent({
+      eventType: 'admin_user_unblocked',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'user',
+      entityId: user._id.toString(),
+      status: 'active'
+    });
+
     res.json({
       user: {
         ...user.toObject(),
@@ -390,6 +453,16 @@ export const deleteThread = async (req, res) => {
 
     // Delete thread
     await Thread.findByIdAndDelete(id);
+
+    await publishAnalyticsEvent({
+      eventType: 'admin_thread_deleted',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'thread',
+      entityId: id,
+      topic: thread.topic,
+      status: thread.status
+    });
 
     // Emit socket event
     req.io.emit('admin:moderation', {
@@ -498,6 +571,20 @@ export const deleteReply = async (req, res) => {
 
     // Delete reply
     await Reply.findByIdAndDelete(id);
+
+    const thread = await Thread.findById(reply.threadId).select('topic');
+    await publishAnalyticsEvent({
+      eventType: 'admin_reply_deleted',
+      userId: req.user._id.toString(),
+      userRole: req.user.role,
+      entityType: 'reply',
+      entityId: id,
+      topic: thread?.topic || null,
+      status: reply.status,
+      metadata: {
+        threadId: reply.threadId.toString()
+      }
+    });
 
     // Emit socket event
     req.io.emit('admin:moderation', {
@@ -651,6 +738,21 @@ export const getAnalytics = async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to get analytics data'
+      }
+    });
+  }
+};
+
+export const getStreamingAnalytics = async (req, res) => {
+  try {
+    const analytics = await getSparkKafkaAnalytics();
+    res.json(analytics);
+  } catch (error) {
+    console.error('Streaming analytics error:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to get Spark/Kafka analytics'
       }
     });
   }

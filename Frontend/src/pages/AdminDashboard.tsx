@@ -3,16 +3,47 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Link } from 'react-router-dom';
 import { 
   Users, MessageSquare, Flag, CheckCircle, Trash2, Search, Shield, BarChart3, AlertTriangle,
-  TrendingUp, TrendingDown, Activity, Eye, Clock, UserPlus, MessageCircle, Zap
+  TrendingUp, TrendingDown, Activity, Eye, Clock, UserPlus, MessageCircle, Zap, Database, Workflow
 } from 'lucide-react';
 import { adminApi } from '../services/api';
-import { Thread, Reply, User } from '../types';
+import { Thread, Reply, User, StreamingAnalytics } from '../types';
 import toast from 'react-hot-toast';
 import AnalyticsCharts from '../components/charts/AnalyticsCharts';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'flagged-threads' | 'flagged-replies' | 'users' | 'analytics'>('overview');
   const [userSearch, setUserSearch] = useState('');
+  const [streamingAnalytics, setStreamingAnalytics] = useState<StreamingAnalytics>({
+    runtime: {
+      sparkEnabled: false,
+      kafkaEnabled: false,
+      kafkaTopic: 'threadapp.events',
+      kafkaBrokers: [],
+      outputDirectory: '',
+      lastProcessedAt: null
+    },
+    trends: {
+      eventType: [],
+      topic: [],
+      moderation: []
+    },
+    events: {
+      recent: []
+    },
+    contributors: {
+      activeUsers: []
+    },
+    kafka: {
+      connected: false,
+      topics: []
+    },
+    pipeline: {
+      processingTime: null,
+      totalEventsInBatch: 0,
+      distinctEventTypes: 0,
+      distinctTopics: 0
+    }
+  });
   const [analyticsData, setAnalyticsData] = useState<{
     totalUsers: number;
     totalThreads: number;
@@ -55,6 +86,14 @@ const AdminDashboard: React.FC = () => {
       onSuccess: (data: any) => {
         setAnalyticsData(data);
       }
+    }
+  );
+  const { data: streamingAnalyticsQuery } = useQuery(
+    'streamingAnalyticsData',
+    adminApi.getStreamingAnalytics,
+    {
+      refetchInterval: 30000,
+      onSuccess: (data: StreamingAnalytics) => setStreamingAnalytics(data)
     }
   );
   const { data: flaggedThreads, error: flaggedThreadsError } = useQuery(
@@ -614,6 +653,96 @@ const AdminDashboard: React.FC = () => {
               {/* Interactive Charts */}
               <AnalyticsCharts data={analyticsData} />
 
+              {/* Spark + Kafka Runtime */}
+              <div className="card-glass p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-textPrimary">Streaming Pipeline Health</h3>
+                  <Workflow className="w-5 h-5 text-textSecondary" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-surfaceElevated border border-border rounded-xl p-4">
+                    <p className="text-xs text-textSecondary mb-1">Kafka</p>
+                    <p className={`text-sm font-semibold ${streamingAnalytics.runtime.kafkaEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                      {streamingAnalytics.runtime.kafkaEnabled ? 'Enabled' : 'Disabled'}
+                    </p>
+                    <p className="text-xs text-textTertiary mt-2">{streamingAnalytics.runtime.kafkaTopic}</p>
+                    <p className="text-xs text-textTertiary mt-1">
+                      {streamingAnalytics.kafka.connected ? 'Broker Connected' : 'Broker Disconnected'}
+                    </p>
+                  </div>
+                  <div className="bg-surfaceElevated border border-border rounded-xl p-4">
+                    <p className="text-xs text-textSecondary mb-1">Spark Streaming</p>
+                    <p className={`text-sm font-semibold ${streamingAnalytics.runtime.sparkEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                      {streamingAnalytics.runtime.sparkEnabled ? 'Enabled' : 'Disabled'}
+                    </p>
+                    <p className="text-xs text-textTertiary mt-2">Window aggregations (5 min)</p>
+                  </div>
+                  <div className="bg-surfaceElevated border border-border rounded-xl p-4">
+                    <p className="text-xs text-textSecondary mb-1">Events In Latest Batch</p>
+                    <p className="text-2xl font-semibold text-textPrimary">{streamingAnalytics.pipeline.totalEventsInBatch}</p>
+                    <p className="text-xs text-textTertiary mt-2">{streamingAnalytics.pipeline.distinctEventTypes} event types</p>
+                  </div>
+                  <div className="bg-surfaceElevated border border-border rounded-xl p-4">
+                    <p className="text-xs text-textSecondary mb-1">Last Processed</p>
+                    <p className="text-sm font-semibold text-textPrimary">
+                      {streamingAnalytics.runtime.lastProcessedAt
+                        ? new Date(streamingAnalytics.runtime.lastProcessedAt).toLocaleString()
+                        : 'No batches yet'}
+                    </p>
+                    <p className="text-xs text-textTertiary mt-2">{streamingAnalytics.pipeline.distinctTopics} active topics</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="card-glass p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-textPrimary">Kafka Topic Metadata</h3>
+                    <Database className="w-5 h-5 text-textSecondary" />
+                  </div>
+                  <div className="text-xs text-textTertiary mb-3">
+                    Brokers: {streamingAnalytics.runtime.kafkaBrokers.join(', ') || 'N/A'}
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {streamingAnalytics.kafka.topics.map((topic) => (
+                      <div key={topic.name} className="bg-surfaceElevated border border-border rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-textPrimary">{topic.name}</p>
+                          <span className="text-xs text-textSecondary">{topic.partitions} partitions</span>
+                        </div>
+                        <p className="text-xs text-textTertiary mt-2">
+                          Partition IDs: {topic.partitionIds.join(', ')}
+                        </p>
+                      </div>
+                    ))}
+                    {streamingAnalytics.kafka.topics.length === 0 && (
+                      <p className="text-sm text-textSecondary">No Kafka topic metadata available yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="card-glass p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-textPrimary">Most Active Users (Streaming)</h3>
+                    <Users className="w-5 h-5 text-textSecondary" />
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {streamingAnalytics.contributors.activeUsers.slice(0, 10).map((item, index) => (
+                      <div key={`${item.userId}-${item.eventType}-${index}`} className="flex items-center justify-between bg-surfaceElevated border border-border rounded-lg p-3">
+                        <div>
+                          <p className="text-sm font-medium text-textPrimary">{item.userId}</p>
+                          <p className="text-xs text-textTertiary">{item.eventType} • {item.userRole}</p>
+                        </div>
+                        <span className="text-lg font-semibold text-neon-blue">{item.eventCount}</span>
+                      </div>
+                    ))}
+                    {streamingAnalytics.contributors.activeUsers.length === 0 && (
+                      <p className="text-sm text-textSecondary">No user activity aggregates yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Today's Activity Summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="card-glass p-6">
@@ -699,6 +828,84 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Kafka + Spark Trend Tables */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="card-glass p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-textPrimary">Top Event Types (Streaming)</h3>
+                    <Database className="w-5 h-5 text-textSecondary" />
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {streamingAnalytics.trends.eventType.slice(0, 8).map((row, index) => (
+                      <div key={`${row.eventType}-${row.window_end}-${index}`} className="flex items-center justify-between bg-surfaceElevated border border-border rounded-lg p-3">
+                        <div>
+                          <p className="text-sm font-medium text-textPrimary">{row.eventType || 'unknown'}</p>
+                          <p className="text-xs text-textTertiary">
+                            {row.window_start && row.window_end
+                              ? `${new Date(row.window_start).toLocaleTimeString()} - ${new Date(row.window_end).toLocaleTimeString()}`
+                              : 'Live (recent stream)'}
+                          </p>
+                        </div>
+                        <span className="text-lg font-semibold text-neon-blue">{row.eventCount}</span>
+                      </div>
+                    ))}
+                    {streamingAnalytics.trends.eventType.length === 0 && (
+                      <p className="text-sm text-textSecondary">No Spark aggregates available yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="card-glass p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-textPrimary">Top Topics (Streaming)</h3>
+                    <TrendingUp className="w-5 h-5 text-textSecondary" />
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {streamingAnalytics.trends.topic.slice(0, 8).map((row, index) => (
+                      <div key={`${row.topic}-${row.window_end}-${index}`} className="flex items-center justify-between bg-surfaceElevated border border-border rounded-lg p-3">
+                        <div>
+                          <p className="text-sm font-medium text-textPrimary">{row.topic || 'untagged'}</p>
+                          <p className="text-xs text-textTertiary">
+                            {row.window_start && row.window_end
+                              ? `${new Date(row.window_start).toLocaleTimeString()} - ${new Date(row.window_end).toLocaleTimeString()}`
+                              : 'Live (recent stream)'}
+                          </p>
+                        </div>
+                        <span className="text-lg font-semibold text-primary-400">{row.eventCount}</span>
+                      </div>
+                    ))}
+                    {streamingAnalytics.trends.topic.length === 0 && (
+                      <p className="text-sm text-textSecondary">No topic trend data yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-glass p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-textPrimary">Recent Kafka Events (Raw Stream)</h3>
+                  <Activity className="w-5 h-5 text-textSecondary" />
+                </div>
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {streamingAnalytics.events.recent.slice(0, 20).map((event, index) => (
+                    <div key={`${event.eventId}-${index}`} className="bg-surfaceElevated border border-border rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-textPrimary">{event.eventType}</p>
+                        <span className="text-xs text-textTertiary">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="text-xs text-textSecondary mt-1">
+                        entity: {event.entityType || 'n/a'}:{event.entityId || 'n/a'} | user: {event.userId || 'anonymous'} | topic: {event.topic || 'none'}
+                      </p>
+                    </div>
+                  ))}
+                  {streamingAnalytics.events.recent.length === 0 && (
+                    <p className="text-sm text-textSecondary">No recent raw events yet.</p>
+                  )}
                 </div>
               </div>
             </div>

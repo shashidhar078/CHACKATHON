@@ -142,3 +142,67 @@ export interface AdminDashboard {
     replies: number;
   };
 }
+
+export interface StreamTrendPoint {
+  window_start: string;
+  window_end: string;
+  eventType?: string;
+  topic?: string;
+  moderationStatus?: string;
+  eventCount: number;
+}
+
+export interface StreamingAnalytics {
+  runtime: {
+    sparkEnabled: boolean;
+    kafkaEnabled: boolean;
+    kafkaTopic: string;
+    kafkaBrokers: string[];
+    outputDirectory: string;
+    lastProcessedAt: string | null;
+  };
+  trends: {
+    eventType: StreamTrendPoint[];
+    topic: StreamTrendPoint[];
+    moderation: StreamTrendPoint[];
+  };
+  events: {
+    recent: Array<{
+      eventId: string;
+      eventType: string;
+      timestamp: string;
+      userId?: string;
+      userRole?: string;
+      entityType?: string;
+      entityId?: string;
+      topic?: string;
+      status?: string;
+    }>;
+  };
+  contributors: {
+    activeUsers: Array<{
+      window_start: string;
+      window_end: string;
+      userId: string;
+      userRole: string;
+      eventType: string;
+      eventCount: number;
+    }>;
+  };
+  kafka: {
+    connected: boolean;
+    error?: string;
+    topics: Array<{
+      name: string;
+      partitions: number;
+      partitionIds: number[];
+      leaderIds: number[];
+    }>;
+  };
+  pipeline: {
+    processingTime: string | null;
+    totalEventsInBatch: number;
+    distinctEventTypes: number;
+    distinctTopics: number;
+  };
+}

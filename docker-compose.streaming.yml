@@ -1,0 +1,87 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    container_name: threadapp-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - '2181:2181'
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: threadapp-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: threadapp-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - '8085:8080'
+    environment:
+      KAFKA_CLUSTERS_0_NAME: threadapp-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: threadapp-spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      --host spark-master
+      --port 7077
+      --webui-port 8080
+    ports:
+      - '7077:7077'
+      - '8080:8080'
+    volumes:
+      - ./:/workspace
+
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: threadapp-spark-worker
+    depends_on:
+      - spark-master
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      --webui-port 8081
+      spark://spark-master:7077
+    ports:
+      - '8081:8081'
+    volumes:
+      - ./:/workspace
+
+  spark-analytics:
+    image: apache/spark:3.5.1
+    container_name: threadapp-spark-analytics
+    depends_on:
+      - kafka
+      - spark-master
+      - spark-worker
+    command: >
+      /bin/bash -lc "mkdir -p /tmp/.ivy2/cache /tmp/.ivy2/jars &&
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --conf spark.jars.ivy=/tmp/.ivy2
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      /workspace/analytics/spark/stream_analytics.py"
+    restart: unless-stopped
+    environment:
+      HOME: /tmp
+    volumes:
+      - ./:/workspace

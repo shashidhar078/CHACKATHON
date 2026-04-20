@@ -20,6 +20,7 @@ import notificationRoutes from './routes/notifications.js';
 import testRoutes from './routes/test.js';
 import uploadRoutes from './routes/upload.js';
 import profileRoutes from './routes/profile.js';
+import { disconnectKafkaAdmin, disconnectKafkaProducer } from './config/kafka.js';
 
 // Load environment variables
 if (process.env.NODE_ENV !== 'production') {
@@ -227,3 +228,17 @@ server.listen(PORT, '0.0.0.0', () => {
     process.exit(1);
   }
 });
+
+const gracefulShutdown = async () => {
+  try {
+    await disconnectKafkaAdmin();
+    await disconnectKafkaProducer();
+  } catch (error) {
+    console.error('[Kafka] Error during shutdown:', error.message);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);

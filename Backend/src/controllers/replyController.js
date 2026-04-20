@@ -3,6 +3,7 @@ import Thread from '../models/Thread.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import aiService from '../utils/aiService.js';
+import { publishAnalyticsEvent } from '../utils/analyticsEventPublisher.js';
 
 // Helper function to add likedByMe field and ensure likes count
 const addLikedByMe = (replies, userId) => {
@@ -77,6 +78,21 @@ export const createReply = async (req, res) => {
 
     await reply.save();
     console.log('Reply saved with status:', reply.status);
+
+    await publishAnalyticsEvent({
+      eventType: reply.status === 'flagged' ? 'reply_flagged' : 'reply_created',
+      userId: userId.toString(),
+      userRole: req.user.role,
+      entityType: 'reply',
+      entityId: reply._id.toString(),
+      topic: thread.topic,
+      status: reply.status,
+      metadata: {
+        threadId: threadId.toString(),
+        isNestedReply: Boolean(parentReplyId),
+        moderationStatus: moderationResult.status
+      }
+    });
 
     // Update thread reply count
     await Thread.updateReplyCount(threadId);
@@ -246,6 +262,21 @@ export const likeReply = async (req, res) => {
       await reply.save();
     }
 
+    const parentThread = await Thread.findById(reply.threadId).select('topic');
+    await publishAnalyticsEvent({
+      eventType: action === 'toggle' && likedByMe ? 'reply_liked' : 'reply_unliked',
+      userId: userId.toString(),
+      userRole: req.user.role,
+      entityType: 'reply',
+      entityId: reply._id.toString(),
+      topic: parentThread?.topic || null,
+      status: reply.status,
+      metadata: {
+        threadId: reply.threadId.toString(),
+        totalLikes: reply.likes.length
+      }
+    });
+
     // Emit socket event
     req.io.to(`thread:${reply.threadId}`).emit('reply:like', {
       replyId: id,
@@ -291,6 +322,20 @@ export const deleteReply = async (req, res) => {
 
     // Delete reply
     await Reply.findByIdAndDelete(id);
+
+    const thread = await Thread.findById(reply.threadId).select('topic');
+    await publishAnalyticsEvent({
+      eventType: 'reply_deleted',
+      userId: req.user?._id?.toString(),
+      userRole: req.user?.role || 'unknown',
+      entityType: 'reply',
+      entityId: id,
+      topic: thread?.topic || null,
+      status: reply.status,
+      metadata: {
+        threadId: reply.threadId.toString()
+      }
+    });
 
     // Emit socket event
     req.io.emit('admin:moderation', {
